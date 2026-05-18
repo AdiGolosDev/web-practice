@@ -30,3 +30,30 @@ function playRound(humanChoice, computerChoice) {
     }
 }
 
+function resetScore() {
+    humanScore = 0;
+    computerScore = 0;
+}
+
+function playGame() {
+    resetScore();
+    for (let index = 0; index < 5; index++) {
+       playRound(getHumanChoice(), getComputerChoice());
+    }
+    
+    if(humanScore === computerScore) {
+        console.log("The game ends in a Draw!");
+    }
+
+    if(humanScore > computerScore) {
+        console.log("You won the Game!");
+    } else {
+        console.log("You lost the game...");
+    }
+
+    console.log("Final score:\n" + "HumanScore: " + humanScore + "\nComputerScore: " + computerScore);
+    
+    resetScore();
+}
+
+playGame();
