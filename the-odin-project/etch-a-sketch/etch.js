@@ -1,5 +1,9 @@
 const container = document.getElementById('container');
 
+function generateRandomN(number) {
+    return Math.floor(Math.random() * number);
+}
+
 function createGrid(size) {
     for(let i = 0; i < size; i++) {
         for(let j = 0; j < size; j++) {
@@ -8,7 +12,21 @@ function createGrid(size) {
             gridSquare.style.height = 960/size + 'px';
             gridSquare.classList.add('grid-square');
             gridSquare.addEventListener('mouseover', () => {
-                gridSquare.style.backgroundColor = 'black';
+                let hoverCount = parseInt(gridSquare.dataset.hoverCount ?? '0');
+
+                if (hoverCount > 9) return;
+
+                if(hoverCount === 0) {
+                    gridSquare.dataset.hue = generateRandomN(360);
+                    gridSquare.dataset.saturation = generateRandomN(100);
+                    gridSquare.dataset.lightness = 50;
+                }
+                
+                hoverCount++;
+                gridSquare.dataset.hoverCount = hoverCount;
+
+                gridSquare.style.backgroundColor = `hsl(${gridSquare.dataset.hue}, ${gridSquare.dataset.saturation}%, ${gridSquare.dataset.lightness - (5 * hoverCount)}%)`;
+
             });
             container.appendChild(gridSquare);
         }
