@@ -32,5 +32,38 @@ function operate(operator, a, b) {
     }
 }
 
-let a, b = 0;
-let operator = '';
+let a, b = null;
+let operator, currentInput = '';
+
+const display = document.querySelector('.display');
+
+document.querySelectorAll('.btn').forEach(button => {
+    button.addEventListener('click', () => {
+        const value = button.textContent;
+
+        if (!isNaN(value) || value === '.') {
+            currentInput += value;
+            display.textContent = currentInput;
+        } else if (['+', '-', '*', '/'].includes(value)) {
+            a = parseFloat(currentInput);
+            operator = value;
+            currentInput = '';
+        } else if (value === '=') {
+            b = parseFloat(currentInput);
+            const result = operate(operator, a, b);
+            display.textContent = result;
+            currentInput = String(result);
+            a = null;
+            operator = '';
+        }
+    });
+
+});
+
+document.querySelector('.clear').addEventListener('click', () => {
+    a = null;
+    b = null;
+    operator = '';
+    currentInput = '';
+    display.textContent = '0';
+});
