@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 # Create your models here.
@@ -15,7 +16,7 @@ class Contact(models.Model):
     sent_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.title
+        return f"{self.name} - {self.subject}"
 
 
 # Book keeps track of books read
@@ -38,3 +39,53 @@ class Book(models.Model):
 
     def __str__(self):
         return self.title
+
+
+# keeps track of reviews written / links to book 1-to-1
+class Review(models.Model):
+    book = models.OneToOneField(Book, on_delete=models.CASCADE)
+    title = models.CharField(max_length=256)
+    slug = models.SlugField(unique=True)
+    markdown_content = models.TextField()
+    date_written = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
+    published = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.title
+
+
+# keeps track of stories written
+class Story(models.Model):
+    title = models.CharField(max_length=256)
+    slug = models.SlugField(unique=True)
+    markdown_content = models.TextField()
+    date_written = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
+    published = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.title
+
+
+# user comments on reviews/stories
+class Comment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    review = models.ForeignKey(Review, null=True, blank=True, on_delete=models.CASCADE)
+    story = models.ForeignKey(Story, null=True, blank=True, on_delete=models.CASCADE)
+    content = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user} - {self.content[:32]}"
+
+
+# upvotes/downvotes on stories/reviews
+class Vote(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    review = models.ForeignKey(Review, null=True, blank=True, on_delete=models.CASCADE)
+    story = models.ForeignKey(Story, null=True, blank=True, on_delete=models.CASCADE)
+    value = models.IntegerField()
+
+    class Meta:
+        unique_together = ('user', 'review', 'story')
