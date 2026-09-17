@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block title %}{{ review.title }} — Adi Books{% endblock %}
+
+{% block content %}
+    <h1>{{ review.title }}</h1>
+    <div>{{ content_html|safe }}</div>
+{% endblock %}
