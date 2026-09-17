@@ -64,6 +64,9 @@ class Story(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
     published = models.BooleanField(default=False)
 
+    class Meta:
+        verbose_name_plural = "Stories"
+
     def __str__(self):
         return self.title
 
