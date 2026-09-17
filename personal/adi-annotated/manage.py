@@ -20,3 +20,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# command-line utility for everything in django
+# will use all the time: python manage.py <command>

@@ -14,3 +14,6 @@ from django.core.asgi import get_asgi_application
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
 application = get_asgi_application()
+# entry point for async/websocket-capable production servers
+# a websocket-capable production server - backend system for maintaining 
+# persistent, bidirectional, full-duplex tcp connections for real-time communication
