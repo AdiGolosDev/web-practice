@@ -13,7 +13,7 @@ def review_detail(request, slug):
 def story_detail(request, slug):
     story = get_object_or_404(Story, slug=slug)
     content_html = markdown.markdown(story.markdown_content)
-    return render(request, 'story_detail.html', {'story': story, 'content_html': content_html})
+    return render(request, 'story.html', {'story': story, 'content_html': content_html})
 
 def about(request):
     return render(request, 'about.html')
