@@ -6,4 +6,5 @@ urlpatterns = [
     path('stories/<slug:slug>/', views.story_detail, name='story_detail'),
     path('about/', views.about, name='about'),
     path('contact/', views.contact, name='contact'),
+    path('api/books/', views.books_api, name='book_api'),
 ]

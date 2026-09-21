@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
-from .models import Review, Story
+from django.http import JsonResponse
+from .models import Book, Review, Story
 import markdown
 
 # Create your views here.
@@ -20,3 +21,24 @@ def about(request):
 
 def contact(request):
     return render(request, 'contact.html')
+
+def books_api(request):
+    books = Book.objects.all()
+    data = []
+    for book in books:
+        review = getattr(book, 'review', None)
+        has_review = review is not None and review.published
+        data.append({
+            'title': book.title,
+            'genre': book.genre,
+            'language': book.language.name if book.language else None,
+            'description': book.description,
+            'year_published': book.year_published,
+            'date_read': book.date_read.isoformat() if book.date_read else None,
+            'page_count': book.page_count,
+            'difficulty': book.difficulty,
+            'rating': book.rating,
+            'has_review': has_review,
+            'review_slug': review.slug if has_review else None,
+        })
+    return JsonResponse(data, safe=False)

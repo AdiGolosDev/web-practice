@@ -21,6 +21,17 @@ class Contact(models.Model):
         return f"{self.name} - {self.subject}"
 
 
+# Language keeps track of languages I've read books in
+class Language(models.Model):
+    name = models.CharField(max_length=64, unique=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
 # Book keeps track of books read
 class Book(models.Model):
     class Genre(models.TextChoices):
@@ -30,10 +41,10 @@ class Book(models.Model):
     title = models.CharField(max_length=128)
     author = models.CharField(max_length=128)
     genre = models.CharField(max_length=20, choices=Genre.choices)
-    is_classic = models.BooleanField(default=False)
+    language = models.ForeignKey(Language, on_delete=models.PROTECT, null=True, blank=True, related_name='books')
+    description = models.TextField(blank=True)
     year_published = models.IntegerField()
-    year_read = models.IntegerField()
-    month_read = models.IntegerField()
+    date_read = models.DateField(null=True, blank=True)
     page_count = models.IntegerField()
     difficulty = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])
     rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(10)])

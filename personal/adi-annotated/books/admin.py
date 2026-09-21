@@ -1,10 +1,30 @@
 from django import forms
 from django.contrib import admin
-from .models import Book, Review, Story
+from .models import Language, Book, Review, Story
+from datetime import date
 
 # Register your models here.
 # where I should register models(book, review),
 #  so they show up and are manageable in the /admin/ panel
+
+class MonthYearField(forms.DateField):
+    """A DateField whose widget is native year-month picker (no day option). Python's strptime fills in day=1 automatically when the format string only specifies year and month."""
+    widget = forms.DateInput(attrs={'type': 'month'})
+    input_formats = ['%Y-%m']
+
+    def prepare_value(self, value):
+        if hasattr(value, 'strftime'):
+            return value.strftime('%Y-%m')
+        return value
+
+
+class BookAdminForm(forms.ModelForm):
+    date_read = MonthYearField(label='Month read', required=False)
+
+    class Meta:
+        model = Book
+        fields = '__all__'
+
 
 class MarkdownUploadForm(forms.ModelForm):
     """
@@ -41,11 +61,16 @@ class MarkdownUploadAdminMixin:
         super().save_model(request, obj, form, change)
 
 
+@admin.register(Language)
+class LanguageAdmin(admin.ModelAdmin):
+    list_display = ("name",)
+
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
-    list_display = ("title", "genre", "year_read", "difficulty", "rating", "is_reviewed")
+    form = BookAdminForm
+    list_display = ("title", "genre", "language", "date_read", "difficulty", "rating", "is_reviewed")
     search_fields = ("title", "author")
-    list_filter = ("genre", "is_classic", "is_reviewed")
+    list_filter = ("genre", "language", "is_reviewed")
     readonly_fields = ("is_reviewed",)
 
 
