@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
 
 # Create your models here.
 # this is where data structures go apparently
@@ -92,3 +94,17 @@ class Vote(models.Model):
 
     class Meta:
         unique_together = ('user', 'review', 'story')
+
+
+@receiver(post_save, sender=Review)
+def sync_book_is_reviewed_save(sender, instance, **kwargs):
+    instance.book.is_reviewed = instance.published
+    instance.book.save(update_fields=['is_reviewed'])
+
+@receiver(post_delete, sender=Review)
+def sync_book_is_reviewed_delete(sender, instance, **kwargs):
+    try:
+        instance.book.is_reviewed = False
+        instance.book.save(update_fields=['is_reviewed'])
+    except Book.DoesNotExist:
+        pass

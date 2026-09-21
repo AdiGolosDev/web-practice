@@ -46,6 +46,7 @@ class BookAdmin(admin.ModelAdmin):
     list_display = ("title", "genre", "year_read", "difficulty", "rating", "is_reviewed")
     search_fields = ("title", "author")
     list_filter = ("genre", "is_classic", "is_reviewed")
+    readonly_fields = ("is_reviewed",)
 
 
 @admin.register(Review)

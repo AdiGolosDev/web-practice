@@ -17,8 +17,8 @@
     --line: #cfc6ae;
     --accent: #20304a;
     --fiction: #4c6b8a;
-    --nonfiction: #9a7b3f;
-    --poetry: #5e7c52;
+    --non-fiction: #9a7b3f;
+    --classic-fiction: #5e7c52;
     --radius: 3px;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -32,8 +32,8 @@
       --line: #2c3444;
       --accent: #9db4d6;
       --fiction: #7fa3c9;
-      --nonfiction: #cfa961;
-      --poetry: #8fb37f;
+      --non-fiction: #cfa961;
+      --classic-fiction: #8fb37f;
     }
   }
   :root[data-theme="dark"] {
@@ -44,8 +44,8 @@
     --line: #2c3444;
     --accent: #9db4d6;
     --fiction: #7fa3c9;
-    --nonfiction: #cfa961;
-    --poetry: #8fb37f;
+    --non-fiction: #cfa961;
+    --classic-fiction: #8fb37f;
   }
   html { scroll-padding-top: env(safe-area-inset-top, 0px); }
   * { box-sizing: border-box; }
@@ -138,6 +138,9 @@
   #details .d-link { color: var(--accent); font-size: 13px; }
 </style>
 </head>
+
+<!-- ---------------------body start---------------------------- -->
+
 <body>
 
 <header>
@@ -145,8 +148,8 @@
   <p class="lede">Every book, plotted by when it was published against when it was read. Color marks genre; a ring means a review exists — click a ringed dot to open it.</p>
   <div class="legend">
     <span><i class="swatch" style="background:var(--fiction)"></i>Fiction</span>
-    <span><i class="swatch" style="background:var(--nonfiction)"></i>Nonfiction</span>
-    <span><i class="swatch" style="background:var(--poetry)"></i>Poetry</span>
+    <span><i class="swatch" style="background:var(--non-fiction)"></i>Non-fiction</span>
+    <span><i class="swatch" style="background:var(--classic-fiction)"></i>Classic-fiction</span>
   </div>
 </header>
 
@@ -163,7 +166,7 @@
 //    call returning the same shape and everything below is unchanged.
 // ---------------------------------------------------------------
 function generateMockBooks(n) {
-  const genres = ['fiction', 'nonfiction', 'poetry'];
+  const genres = ['fiction', 'non-fiction', 'classic-fiction'];
   const titleWords = ['Shadow', 'Garden', 'River', 'Quiet', 'Winter', 'Glass', 'Ember', 'Salt', 'Field', 'Paper', 'Hollow', 'Coast', 'Lantern', 'Orbit', 'Marrow'];
   const books = [];
   const now = new Date();
@@ -190,12 +193,12 @@ function generateMockBooks(n) {
   return books;
 }
 
-const books = generateMockBooks(85); // <- swap for real fetched data
+const books = generateMockBooks(100); // <- swap for real fetched data
 
 // ---------------------------------------------------------------
 // 2. SCALES
 // ---------------------------------------------------------------
-const margin = { top: 20, right: 18, bottom: 40, left: 42 };
+const margin = { top: 20, right: 40, bottom: 20, left: 40 };
 const today = new Date();
 const currentYear = today.getFullYear();
 
@@ -240,8 +243,8 @@ const innerHeight = height;
 const x = d3.scaleLinear().domain(xDomain).range([xRangePadding, innerWidth]);
 const y = d3.scaleBand().domain(monthKeys).range([0, innerHeight]).padding(0.35);
 const color = d3.scaleOrdinal()
-  .domain(['fiction', 'nonfiction', 'poetry'])
-  .range(['var(--fiction)', 'var(--nonfiction)', 'var(--poetry)']);
+  .domain(['fiction', 'non-fiction', 'classic-fiction'])
+  .range(['var(--fiction)', 'var(--non-fiction)', 'var(--classic-fiction)']);
 
 // ---------------------------------------------------------------
 // 3. DRAW
