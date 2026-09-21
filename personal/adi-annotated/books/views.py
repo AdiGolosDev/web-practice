@@ -6,6 +6,9 @@ import markdown
 # Create your views here.
 # logic that handles requests and responses goes here
 
+def index(request):
+    return render(request, 'index.html')
+
 def review_detail(request, slug):
     review = get_object_or_404(Review, slug=slug)
     content_html = markdown.markdown(review.markdown_content)

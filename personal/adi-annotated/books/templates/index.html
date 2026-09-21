@@ -1,0 +1,322 @@
+
+
+Index · HTML
+{% extends "base.html" %}
+{# NOTE: assumes your base.html defines a block called "content" — #}
+{# rename below if yours uses a different block name. #}
+ 
+{% block content %}
+ 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+ 
+<style>
+  :root {
+    --bg: #efe9da;
+    --bg-panel: #e4ddc9;
+    --ink: #2a2621;
+    --ink-soft: #6b6355;
+    --line: #cfc6ae;
+    --accent: #20304a;
+    --fiction: #4c6b8a;
+    --non-fiction: #9a7b3f;
+    --radius: 3px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141a24;
+      --bg-panel: #1b2230;
+      --ink: #e9e4d8;
+      --ink-soft: #9aa0ab;
+      --line: #2c3444;
+      --accent: #9db4d6;
+      --fiction: #7fa3c9;
+      --non-fiction: #cfa961;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141a24;
+    --bg-panel: #1b2230;
+    --ink: #e9e4d8;
+    --ink-soft: #9aa0ab;
+    --line: #2c3444;
+    --accent: #9db4d6;
+    --fiction: #7fa3c9;
+    --non-fiction: #cfa961;
+  }
+  * { box-sizing: border-box; }
+  #timeline-header {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px 24px;
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+  }
+  #timeline-header h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(28px, 5vw, 40px);
+    margin: 0 0 8px;
+  }
+  #timeline-header p.lede {
+    color: var(--ink-soft);
+    max-width: 60ch;
+    margin: 0;
+  }
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+ 
+  #timeline-main {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 3vw 64px;
+    overflow-x: auto;
+  }
+  #chart-wrap {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  svg { display: block; background: var(--bg); }
+  .axis text { fill: var(--ink-soft); font-size: 11px; font-family: 'Inter', sans-serif; }
+  .axis path, .axis line { stroke: var(--line); }
+  .book-dot { cursor: pointer; }
+  .book-dot:hover { stroke: var(--ink); stroke-width: 1px; }
+ 
+  #tooltip {
+    position: fixed;
+    pointer-events: none;
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 8px 10px;
+    font-size: 12px;
+    max-width: 220px;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    z-index: 10;
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+  }
+  #tooltip .t-title { font-weight: 600; margin-bottom: 2px; }
+  #tooltip .t-meta { color: var(--ink-soft); }
+</style>
+ 
+<header id="timeline-header">
+  <h1>Reading Timeline</h1>
+  <p class="lede">Every book, plotted by when it was published against when it was read. Color marks genre; a ring means a review exists — click a ringed dot to read it.</p>
+  <div class="legend">
+    <span><i class="swatch" style="background:var(--fiction)"></i>Fiction</span>
+    <span><i class="swatch" style="background:var(--non-fiction)"></i>Non-fiction</span>
+  </div>
+</header>
+ 
+<main id="timeline-main">
+  <div id="chart-wrap"></div>
+</main>
+ 
+<div id="tooltip"></div>
+ 
+<script>
+(async function () {
+  // ---------------------------------------------------------------
+  // 1. DATA — real fetch, replacing generateMockBooks() entirely
+  // ---------------------------------------------------------------
+  const res = await fetch('/api/books/');
+  if (!res.ok) {
+    console.error('Failed to load /api/books/:', res.status);
+    return;
+  }
+  const raw = await res.json();
+ 
+  // date_read comes back as "YYYY-MM-01". Parsing that with `new Date("...")`
+  // treats it as UTC midnight, which can silently roll back a day in
+  // timezones behind UTC — splitting and constructing locally avoids that.
+  const books = raw.map(b => {
+    const [ry, rm] = b.date_read.split('-').map(Number);
+    return { ...b, date_read: new Date(ry, rm - 1, 1) };
+  });
+ 
+  // ---------------------------------------------------------------
+  // 2. SCALES
+  // ---------------------------------------------------------------
+  const margin = { top: 20, right: 40, bottom: 20, left: 40 };
+  const today = new Date();
+  const currentYear = today.getFullYear();
+ 
+  const chartStartYear = 2021;
+  const yearCount = currentYear - chartStartYear + 1;
+  const minYearHeight = 80;
+  const availableHeight = Math.max(0, window.innerHeight - 240);
+  const yearHeight = Math.max(minYearHeight, availableHeight / yearCount);
+  const monthBandHeight = yearHeight / 12;
+ 
+  // x: publish year. Your API only gives a year (year_published is a plain
+  // int, no month), so unlike the mock demo there's no fractional
+  // year+month offset here — the value plots as a whole number directly.
+  const pubYears = books.map(d => d.year_published);
+  const minPubYear = d3.min(pubYears);
+  const xDomain = [minPubYear, currentYear];
+ 
+  const monthKey = d => `${d.date_read.getFullYear()}-${String(d.date_read.getMonth() + 1).padStart(2, '0')}`;
+  const monthKeys = [];
+  for (let yr = chartStartYear; yr <= currentYear; yr++) {
+    const lastMonth = yr === currentYear ? today.getMonth() : 11;
+    for (let mo = 0; mo <= lastMonth; mo++) {
+      monthKeys.push(`${yr}-${String(mo + 1).padStart(2, '0')}`);
+    }
+  }
+  const yearTicks = monthKeys.filter(k => k.endsWith('-01'));
+ 
+  const chartWidth = Math.min(window.innerWidth * 0.94, 1600);
+  const width = Math.max(chartWidth, 320);
+  const height = monthKeys.length * monthBandHeight;
+  const innerWidth = width - margin.left - margin.right;
+  const xRangePadding = innerWidth * 0.05;
+  const innerHeight = height;
+ 
+  const x = d3.scaleLinear().domain(xDomain).range([xRangePadding, innerWidth]);
+  const y = d3.scaleBand().domain(monthKeys).range([0, innerHeight]).padding(0.35);
+ 
+  // A plain lookup object instead of d3.scaleOrdinal's parallel
+  // domain/range arrays — one place to get a genre's color right instead
+  // of two lists that have to stay in sync by hand (that's what caused
+  // the classic-fiction typo bug earlier). Keys must match Book.Genre
+  // choices in models.py exactly ('fiction' / 'non_fiction').
+  const GENRE_COLORS = {
+    fiction: 'var(--fiction)',
+    non_fiction: 'var(--non-fiction)',
+  };
+  const color = genre => GENRE_COLORS[genre] || '#999';
+ 
+  // ---------------------------------------------------------------
+  // 3. DRAW
+  // ---------------------------------------------------------------
+  const svg = d3.select('#chart-wrap')
+    .append('svg')
+      .attr('width', width)
+      .attr('height', height + margin.top + margin.bottom)
+      .style('opacity', 0);
+ 
+  const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+ 
+  g.append('g')
+    .attr('class', 'axis')
+    .call(d3.axisTop(x).tickFormat(d3.format('d')).ticks(8));
+ 
+  g.append('g')
+    .attr('class', 'axis')
+    .call(d3.axisLeft(y).tickValues(yearTicks).tickFormat(k => k.split('-')[0]));
+ 
+  g.selectAll('.year-line')
+    .data(yearTicks)
+    .enter()
+    .append('line')
+      .attr('class', 'year-line')
+      .attr('x1', 0)
+      .attr('x2', innerWidth)
+      .attr('y1', k => y(k))
+      .attr('y2', k => y(k))
+      .attr('stroke', 'var(--ink-soft)')
+      .attr('stroke-width', 1)
+      .style('opacity', 0.18);
+ 
+  // ---------------------------------------------------------------
+  // 4. ENTER ANIMATION — dots, then review rings
+  // ---------------------------------------------------------------
+  const sortedByRead = [...books].sort((a, b) => a.date_read - b.date_read);
+  const stagger = Math.min(18, 1200 / Math.max(sortedByRead.length, 1));
+  const dotDuration = 500;
+  const phase1TotalMs = (sortedByRead.length - 1) * stagger + dotDuration;
+ 
+  const tooltip = d3.select('#tooltip');
+ 
+  const dots = g.selectAll('.book-dot')
+    .data(sortedByRead)
+    .enter()
+    .append('circle')
+      .attr('class', 'book-dot')
+      .attr('cx', xRangePadding)
+      .attr('cy', d => y(monthKey(d)) + y.bandwidth() / 2)
+      .attr('r', 4)
+      .attr('fill', d => color(d.genre))
+      .style('opacity', 0)
+      .on('mousemove', (event, d) => {
+        tooltip
+          .style('opacity', 1)
+          .style('left', `${event.clientX + 14}px`)
+          .style('top', `${event.clientY + 10}px`)
+          .html(`
+            <div class="t-title">${d.title}</div>
+            <div class="t-meta">${d.genre.replace('_', '-')} · published ${d.year_published}</div>
+            <div class="t-meta">read ${d3.timeFormat('%b %Y')(d.date_read)}</div>
+            ${d.language ? `<div class="t-meta">${d.language}</div>` : ''}
+          `);
+      })
+      .on('mouseleave', () => tooltip.style('opacity', 0))
+      .on('click', (event, d) => {
+        // real routes now exist (Phase 3), so this navigates for real
+        if (d.has_review) window.location.href = `/reviews/${d.review_slug}/`;
+      });
+ 
+  svg.transition().duration(300).style('opacity', 1);
+ 
+  dots.transition()
+    .delay((d, i) => i * stagger)
+    .duration(dotDuration)
+    .attr('cx', d => x(d.year_published))
+    .style('opacity', 1);
+ 
+  const withReview = books.filter(d => d.has_review);
+  const ringDuration = 700;
+  const ringStagger = Math.min(12, 800 / Math.max(withReview.length, 1));
+  const orbitRadius = 13;
+  const orbitTurns = 1.25;
+ 
+  const rings = g.selectAll('.review-ring')
+    .data(withReview)
+    .enter()
+    .append('circle')
+      .attr('class', 'review-ring')
+      .attr('r', 6)
+      .attr('fill', 'none')
+      .attr('stroke', d => color(d.genre))
+      .attr('stroke-width', 1)
+      .style('opacity', 0);
+ 
+  rings.transition()
+    .delay((d, i) => phase1TotalMs + i * ringStagger)
+    .duration(ringDuration)
+    .style('opacity', 0.6)
+    .attrTween('cx', function (d) {
+      const targetX = x(d.year_published);
+      return t => {
+        const angle = orbitTurns * 2 * Math.PI * (1 - t);
+        const r = orbitRadius * (1 - t);
+        return targetX + r * Math.cos(angle);
+      };
+    })
+    .attrTween('cy', function (d) {
+      const targetY = y(monthKey(d)) + y.bandwidth() / 2;
+      return t => {
+        const angle = orbitTurns * 2 * Math.PI * (1 - t);
+        const r = orbitRadius * (1 - t);
+        return targetY + r * Math.sin(angle);
+      };
+    });
+})();
+</script>
+ 
+{% endblock %}
+ 
