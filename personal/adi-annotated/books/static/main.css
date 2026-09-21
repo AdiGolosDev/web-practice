@@ -1,0 +1,113 @@
+/* ---------------------------------------------------------------
+   Design tokens — the whole palette lives here, once. Every other
+   stylesheet on the site (like graph.css) reads these instead of
+   hardcoding hex values, so a palette change only ever happens here.
+--------------------------------------------------------------- */
+:root {
+  --ink: #06080f; /* Ink Black — text, header/footer bg */
+  --paper: #e8dcb8; /* Pearl Beige — main background, "aged paper" */
+  --wine: #84241f; /* Dark Wine — punctuated elements, fiction dots */
+  --teal: #125154; /* Dark Teal — punctuated elements, non-fiction dots */
+  --periwinkle: #cbc5ea; /* Periwinkle — accent, only used against --ink (fails contrast on paper) */
+
+  --font-serif: "Fraunces", serif;
+  --font-sans: "Inter", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  margin: 0 0 0.4em;
+}
+
+a {
+  color: var(--wine);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--teal);
+  text-decoration: underline;
+}
+
+/* -----------------------------------------------------------
+   Header / nav — Ink Black band. This is the one place
+   Periwinkle gets used, since it only has real contrast
+   against dark backgrounds, not against Pearl Beige.
+------------------------------------------------------------ */
+.site-nav {
+  background: var(--ink);
+  padding: 16px 24px;
+  display: flex;
+  gap: 20px;
+}
+.site-nav a {
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-weight: 500;
+}
+.site-nav a:hover {
+  color: var(--periwinkle);
+  text-decoration: none;
+}
+
+/* -----------------------------------------------------------
+   Footer — same dark band treatment as the nav, for a
+   consistent "frame" around the paper-colored content.
+------------------------------------------------------------ */
+.site-footer {
+  background: var(--ink);
+  color: var(--paper);
+  text-align: center;
+  padding: 20px;
+  font-size: 13px;
+}
+.site-footer p {
+  margin: 0;
+}
+
+main {
+  min-height: 60vh;
+}
+
+/* -----------------------------------------------------------
+   Small reusable pieces other pages/templates can reach for
+   without writing new CSS — a tag/pill (e.g. genre or language
+   label) and a soft panel/card background.
+------------------------------------------------------------ */
+.tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--paper);
+  background: var(--wine);
+}
+.tag--teal {
+  background: var(--teal);
+}
+
+.panel {
+  background: color-mix(in srgb, var(--paper) 88%, var(--ink) 12%);
+  border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
+  border-radius: 4px;
+  padding: 16px 18px;
+}

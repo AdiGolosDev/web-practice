@@ -1,0 +1,105 @@
+#timeline-header {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 24px 24px;
+}
+#timeline-header p.lede {
+  color: var(--ink);
+  opacity: 0.7;
+  max-width: 60ch;
+  margin: 0;
+}
+
+.legend {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  font-size: 13px;
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.swatch-fiction {
+  background: var(--wine);
+}
+.swatch-non-fiction {
+  background: var(--teal);
+}
+
+#timeline-main {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 3vw 64px;
+  overflow-x: auto;
+}
+#chart-wrap {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+svg {
+  display: block;
+  background: var(--paper);
+}
+
+.axis text {
+  fill: var(--ink);
+  opacity: 0.6;
+  font-size: 11px;
+  font-family: var(--font-sans);
+}
+.axis path,
+.axis line {
+  stroke: var(--ink);
+  opacity: 0.25;
+}
+.year-line {
+  stroke: var(--ink);
+}
+
+.book-dot {
+  cursor: pointer;
+}
+.book-dot:hover {
+  stroke: var(--ink);
+  stroke-width: 1px;
+}
+
+/* review rings: deliberately Ink Black rather than genre-colored,
+   with extra breathing room from the dot and a heavier stroke so
+   "this one has a review" reads clearly at a glance */
+.review-ring {
+  pointer-events: none;
+}
+
+#tooltip {
+  position: fixed;
+  pointer-events: none;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 3px;
+  padding: 8px 10px;
+  font-size: 12px;
+  max-width: 220px;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+  z-index: 10;
+  color: var(--ink);
+}
+#tooltip .t-title {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+#tooltip .t-meta {
+  opacity: 0.7;
+}
