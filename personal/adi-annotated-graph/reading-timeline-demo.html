@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Reading Timeline — D3 demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<style>
+  :root {
+    --bg: #efe9da;
+    --bg-panel: #e4ddc9;
+    --ink: #2a2621;
+    --ink-soft: #6b6355;
+    --line: #cfc6ae;
+    --accent: #20304a;
+    --fiction: #4c6b8a;
+    --nonfiction: #9a7b3f;
+    --poetry: #5e7c52;
+    --radius: 3px;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141a24;
+      --bg-panel: #1b2230;
+      --ink: #e9e4d8;
+      --ink-soft: #9aa0ab;
+      --line: #2c3444;
+      --accent: #9db4d6;
+      --fiction: #7fa3c9;
+      --nonfiction: #cfa961;
+      --poetry: #8fb37f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141a24;
+    --bg-panel: #1b2230;
+    --ink: #e9e4d8;
+    --ink-soft: #9aa0ab;
+    --line: #2c3444;
+    --accent: #9db4d6;
+    --fiction: #7fa3c9;
+    --nonfiction: #cfa961;
+    --poetry: #8fb37f;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.5;
+  }
+  header {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px 24px;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(28px, 5vw, 40px);
+    margin: 0 0 8px;
+  }
+  p.lede {
+    color: var(--ink-soft);
+    max-width: 60ch;
+    margin: 0;
+  }
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .swatch {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  main {
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 3vw 64px;
+    overflow-x: auto;
+  }
+  #chart-wrap {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  svg { display: block; }
+  .axis text { fill: var(--ink-soft); font-size: 11px; font-family: 'Inter', sans-serif; }
+  .axis path, .axis line { stroke: var(--line); }
+  .axis-label { fill: var(--ink-soft); font-size: 11px; text-transform: none; }
+  .book-dot { cursor: pointer; }
+  .book-dot:hover { stroke: var(--ink); stroke-width: 1px; }
+  #tooltip {
+    position: fixed;
+    pointer-events: none;
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 8px 10px;
+    font-size: 12px;
+    max-width: 220px;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    z-index: 10;
+  }
+  #tooltip .t-title { font-weight: 600; margin-bottom: 2px; }
+  #tooltip .t-meta { color: var(--ink-soft); }
+  #details {
+    margin-top: 20px;
+    padding: 16px 18px;
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    font-size: 14px;
+    min-height: 20px;
+  }
+  #details .placeholder { color: var(--ink-soft); }
+  #details .d-title { font-weight: 600; margin-bottom: 4px; }
+  #details .d-link { color: var(--accent); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Reading Timeline</h1>
+  <p class="lede">Every book, plotted by when it was published against when it was read. Color marks genre; a ring means a review exists — click a ringed dot to open it.</p>
+  <div class="legend">
+    <span><i class="swatch" style="background:var(--fiction)"></i>Fiction</span>
+    <span><i class="swatch" style="background:var(--nonfiction)"></i>Nonfiction</span>
+    <span><i class="swatch" style="background:var(--poetry)"></i>Poetry</span>
+  </div>
+</header>
+
+<main>
+  <div id="chart-wrap"></div>
+  <div id="details"><span class="placeholder">Click a dot to see its details here.</span></div>
+</main>
+
+<div id="tooltip"></div>
+
+<script>
+// ---------------------------------------------------------------
+// 1. DATA — replace generateMockBooks() with a fetch('/api/books/')
+//    call returning the same shape and everything below is unchanged.
+// ---------------------------------------------------------------
+function generateMockBooks(n) {
+  const genres = ['fiction', 'nonfiction', 'poetry'];
+  const titleWords = ['Shadow', 'Garden', 'River', 'Quiet', 'Winter', 'Glass', 'Ember', 'Salt', 'Field', 'Paper', 'Hollow', 'Coast', 'Lantern', 'Orbit', 'Marrow'];
+  const books = [];
+  const now = new Date();
+  for (let i = 0; i < n; i++) {
+    const genre = genres[Math.floor(Math.random() * genres.length)];
+    const pubYear = Math.floor(1930 + Math.random() * 96); // 1930–2026
+    const pubMonth = Math.floor(Math.random() * 12);
+    const monthsAgo = Math.floor(Math.random() * 60); // read sometime in the last 5 years
+    const dateRead = new Date(now.getFullYear(), now.getMonth() - monthsAgo, Math.floor(1 + Math.random() * 27));
+    const hasReview = Math.random() < 0.35;
+    const title = titleWords[Math.floor(Math.random() * titleWords.length)] + ' ' +
+                  titleWords[Math.floor(Math.random() * titleWords.length)];
+    books.push({
+      title,
+      genre,
+      date_published: new Date(pubYear, pubMonth, 1),
+      date_read: dateRead,
+      page_count: Math.floor(120 + Math.random() * 500),
+      difficulty_rating: Math.floor(1 + Math.random() * 5),
+      has_review: hasReview,
+      review_slug: hasReview ? title.toLowerCase().replace(/\s+/g, '-') : null,
+    });
+  }
+  return books;
+}
+
+const books = generateMockBooks(85); // <- swap for real fetched data
+
+// ---------------------------------------------------------------
+// 2. SCALES
+// ---------------------------------------------------------------
+const margin = { top: 20, right: 18, bottom: 40, left: 42 };
+const today = new Date();
+const currentYear = today.getFullYear();
+
+// Keep each year around 80–100px when possible, but expand the current
+// timeline to use the available viewport height. If more years are added
+// later, the chart is allowed to grow beyond the viewport.
+const chartStartYear = 2021;
+const yearCount = currentYear - chartStartYear + 1;
+const minYearHeight = 80;
+const availableHeight = Math.max(0, window.innerHeight - 240);
+const yearHeight = Math.max(minYearHeight, availableHeight / yearCount);
+const monthBandHeight = yearHeight / 12;
+
+// x: publish year, spanning the oldest publication year in the data
+// through the current year.
+const pubYears = books.map(d => d.date_published.getFullYear());
+const minPubYear = d3.min(pubYears);
+const xDomain = [minPubYear, currentYear];
+
+// y: a row per calendar month, ordered chronologically from 2021 at the
+// top down to the current month in 2026. Months with zero books still get
+// a row, keeping every year the same visual height.
+const monthKey = d => `${d.date_read.getFullYear()}-${String(d.date_read.getMonth() + 1).padStart(2, '0')}`;
+const monthKeys = [];
+for (let yr = chartStartYear; yr <= currentYear; yr++) {
+  const lastMonth = yr === currentYear ? today.getMonth() : 11;
+  for (let mo = 0; mo <= lastMonth; mo++) {
+    monthKeys.push(`${yr}-${String(mo + 1).padStart(2, '0')}`);
+  }
+}
+
+// one tick/gridline per year, anchored to that year's January row
+const yearTicks = monthKeys.filter(k => k.endsWith('-01'));
+
+const chartWidth = Math.min(window.innerWidth * 0.94, 1600);
+const width = Math.max(chartWidth, 320);
+const height = monthKeys.length * monthBandHeight;
+const innerWidth = width - margin.left - margin.right;
+const xRangePadding = innerWidth * 0.05;
+const innerHeight = height;
+
+const x = d3.scaleLinear().domain(xDomain).range([xRangePadding, innerWidth]);
+const y = d3.scaleBand().domain(monthKeys).range([0, innerHeight]).padding(0.35);
+const color = d3.scaleOrdinal()
+  .domain(['fiction', 'nonfiction', 'poetry'])
+  .range(['var(--fiction)', 'var(--nonfiction)', 'var(--poetry)']);
+
+// ---------------------------------------------------------------
+// 3. DRAW
+// ---------------------------------------------------------------
+const svg = d3.select('#chart-wrap')
+  .append('svg')
+    .attr('width', width)
+    .attr('height', height + margin.top + margin.bottom)
+    .style('opacity', 0); // whole-chart fade-in target
+
+const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+// x axis (top, since this is a tall vertical timeline read top-to-bottom)
+g.append('g')
+  .attr('class', 'axis')
+  .call(d3.axisTop(x).tickFormat(d3.format('d')).ticks(8));
+
+// y axis — one tick per year (just the number, no "Year read" title —
+// books are still bucketed and sorted by month underneath this, the
+// axis just doesn't spell that out visually)
+g.append('g')
+  .attr('class', 'axis')
+  .call(d3.axisLeft(y).tickValues(yearTicks).tickFormat(k => k.split('-')[0]));
+
+// faint horizontal line marking the start of each year, spanning the
+// full chart width, so a book's year is readable without hovering
+g.selectAll('.year-line')
+  .data(yearTicks)
+  .enter()
+  .append('line')
+    .attr('class', 'year-line')
+    .attr('x1', 0)
+    .attr('x2', innerWidth)
+    .attr('y1', k => y(k))
+    .attr('y2', k => y(k))
+    .attr('stroke', 'var(--ink-soft)')
+    .attr('stroke-width', 1)
+    .style('opacity', 0.18);
+
+// ---------------------------------------------------------------
+// 4. ENTER ANIMATION — two phases
+//    Phase 1: dots. Order = date_read ascending (oldest first).
+//    Dots start just above the chart, invisible, and drop + fade
+//    into their row. Delay scales down as the collection grows so
+//    300 books still finishes in ~1.2s instead of taking forever.
+//    Phase 2: review rings. These don't start until phase 1 is
+//    fully done — each ring spirals in around its dot's final
+//    position rather than just fading in place.
+// ---------------------------------------------------------------
+const sortedByRead = [...books].sort((a, b) => a.date_read - b.date_read);
+const stagger = Math.min(18, 1200 / sortedByRead.length);
+const dotDuration = 500;
+const phase1TotalMs = (sortedByRead.length - 1) * stagger + dotDuration;
+
+const tooltip = d3.select('#tooltip');
+const details = d3.select('#details');
+
+const dots = g.selectAll('.book-dot')
+  .data(sortedByRead)
+  .enter()
+  .append('circle')
+    .attr('class', 'book-dot')
+    .attr('cx', xRangePadding) // start at the left edge of the plot
+    .attr('cy', d => y(monthKey(d)) + y.bandwidth() / 2)
+    .attr('r', 4)    // small — this has to stay legible at hundreds of dots
+    .attr('fill', d => color(d.genre))
+    .style('opacity', 0)
+    .on('mousemove', (event, d) => {
+      tooltip
+        .style('opacity', 1)
+        .style('left', `${event.clientX + 14}px`)
+        .style('top', `${event.clientY + 10}px`)
+        .html(`
+          <div class="t-title">${d.title}</div>
+          <div class="t-meta">${d.genre} · published ${d.date_published.getFullYear()}</div>
+          <div class="t-meta">read ${d3.timeFormat('%b %Y')(d.date_read)}</div>
+        `);
+    })
+    .on('mouseleave', () => tooltip.style('opacity', 0))
+    .on('click', (event, d) => {
+      if (!d.has_review) return;
+      // real site: window.location.href = `/reviews/${d.review_slug}/`;
+      details.html(`
+        <div class="d-title">${d.title}</div>
+        <div>${d.genre} · read ${d3.timeFormat('%B %Y')(d.date_read)}</div>
+        <div class="d-link">→ would open /reviews/${d.review_slug}/</div>
+      `);
+    });
+
+svg.transition().duration(300).style('opacity', 1);
+
+dots.transition()
+  .delay((d, i) => i * stagger)
+  .duration(dotDuration)
+  .attr('cx', d => x(d.date_published.getFullYear() + d.date_published.getMonth() / 12))
+  .style('opacity', 1);
+
+// Phase 2 — review rings spiral in around their dot once phase 1 is done.
+// Each ring's cx/cy is driven by a custom interpolator (attrTween) that
+// orbits around the target point while its orbit radius decays to 0,
+// so it looks like it swings in and lands on the dot rather than just
+// fading into place.
+const withReview = books.filter(d => d.has_review);
+const ringDuration = 700;
+const ringStagger = Math.min(12, 800 / Math.max(withReview.length, 1));
+const orbitRadius = 13;  // px — how wide the swing-in loop is
+const orbitTurns = 1.25; // how many loops it makes before landing
+
+const rings = g.selectAll('.review-ring')
+  .data(withReview)
+  .enter()
+  .append('circle')
+    .attr('class', 'review-ring')
+    .attr('r', 6)
+    .attr('fill', 'none')
+    .attr('stroke', d => color(d.genre))
+    .attr('stroke-width', 1)
+    .style('opacity', 0);
+
+rings.transition()
+  .delay((d, i) => phase1TotalMs + i * ringStagger)
+  .duration(ringDuration)
+  .style('opacity', 0.6)
+  .attrTween('cx', function(d) {
+    const targetX = x(d.date_published.getFullYear() + d.date_published.getMonth() / 12);
+    return t => {
+      const angle = orbitTurns * 2 * Math.PI * (1 - t);
+      const r = orbitRadius * (1 - t);
+      return targetX + r * Math.cos(angle);
+    };
+  })
+  .attrTween('cy', function(d) {
+    const targetY = y(monthKey(d)) + y.bandwidth() / 2;
+    return t => {
+      const angle = orbitTurns * 2 * Math.PI * (1 - t);
+      const r = orbitRadius * (1 - t);
+      return targetY + r * Math.sin(angle);
+    };
+  });
+</script>
+
+</body>
+</html>
