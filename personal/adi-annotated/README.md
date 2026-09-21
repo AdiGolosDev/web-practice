@@ -50,7 +50,7 @@ Updating this section as I go — a running log rather than a finished claim.
 
 ## Project status
 
-🚧 In progress - getting started...
+🚧 In progress - making graph for displaying books read with D3js :)
 
 ## Roadmap / ideas for later
 
