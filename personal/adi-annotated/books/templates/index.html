@@ -47,9 +47,6 @@
   const today = new Date();
   const currentYear = today.getFullYear();
 
-  // Month range: from the earliest book's read month, forward to the
-  // current month, then reversed so the most recent month is at the top
-  // (matches the x-axis convention of "most recent = further along").
   const earliestRead = d3.min(books, d => d.date_read);
   const cursor = new Date(earliestRead.getFullYear(), earliestRead.getMonth(), 1);
   const endCursor = new Date(currentYear, today.getMonth(), 1);
@@ -59,7 +56,7 @@
     monthKeys.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`);
     cursor.setMonth(cursor.getMonth() + 1);
   }
-  monthKeys.reverse(); // most recent month first = top of the chart
+  // chronological order, earliest first = top of the chart (no reverse)
   const yearTicks = monthKeys.filter(k => k.endsWith('-01'));
 
   const minYearHeight = 50;
@@ -79,11 +76,6 @@
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height;
 
-  // originGap: the single shared "zero point" for both axes. The x-axis's
-  // left edge and the y-axis's top edge both start exactly here, so they
-  // meet at one clean corner — everything between the SVG's outer edge
-  // and this corner is pure margin, and no dot/ring/gridline can render
-  // before it, since it's baked into the scales' own ranges.
   const originGap = 40;
 
   const x = d3.scaleLinear().domain(xDomain).range([originGap, innerWidth]);
@@ -94,6 +86,16 @@
     non_fiction: 'var(--teal)',
   };
   const color = genre => GENRE_COLORS[genre] || '#999';
+
+  // Dot radius by page count. scaleSqrt (not scaleLinear) because for a
+  // circle, it's *area* that reads as "size" to the eye, not radius —
+  // a linear radius scale would make long books look disproportionately
+  // huge. clamp(true) means a 60-page book and a 2000-page book both
+  // just sit at the scale's floor/ceiling rather than going off-range.
+  const pageRadius = d3.scaleSqrt()
+    .domain([100, 1000])   // 100pg → small (matches the old fixed r:4), 1000pg+ → capped large
+    .range([4, 11])
+    .clamp(true);
 
   // ---------------------------------------------------------------
   // 3. DRAW
@@ -110,9 +112,6 @@
     .attr('class', 'axis')
     .call(d3.axisTop(x).tickFormat(d3.format('d')).ticks(8));
 
-  // Plain axisLeft(y) — d3 auto-centers each tick at y(k) + bandwidth()/2
-  // for a band scale. The gridlines below use that exact same formula,
-  // so the label and its line always land on the same pixel.
   g.append('g')
     .attr('class', 'axis')
     .call(d3.axisLeft(y).tickValues(yearTicks).tickFormat(k => k.split('-')[0]));
@@ -130,11 +129,14 @@
       .style('opacity', 0.18);
 
   // ---------------------------------------------------------------
-  // 4. ENTER ANIMATION — dots, then review rings
+  // 4. ENTER ANIMATION — dots fall top-to-bottom (rain), oldest read
+  // first, with a fixed noticeable gap between each one's entrance.
   // ---------------------------------------------------------------
-  const sortedByRead = [...books].sort((a, b) => a.date_read - b.date_read);
-  const stagger = Math.min(18, 1200 / Math.max(sortedByRead.length, 1));
-  const dotDuration = 500;
+  const sortedByRead = [...books].sort((a, b) => a.date_read - b.date_read); // oldest first
+  const stagger = 80; // fixed ms between each book's fall — stays noticeable regardless of book count.
+                        // Total intro time = books.length * stagger + dotDuration, so this grows as
+                        // your library does — bring dotDuration down first if it starts feeling slow.
+  const dotDuration = 1000;
   const phase1TotalMs = (sortedByRead.length - 1) * stagger + dotDuration;
 
   const tooltip = d3.select('#tooltip');
@@ -144,9 +146,9 @@
     .enter()
     .append('circle')
       .attr('class', 'book-dot')
-      .attr('cx', originGap)
-      .attr('cy', d => y(monthKey(d)) + y.bandwidth() / 2)
-      .attr('r', 4)
+      .attr('cx', d => x(d.year_published))
+      .attr('cy', originGap - 30)
+      .attr('r', d => pageRadius(d.page_count))
       .attr('fill', d => color(d.genre))
       .style('opacity', 0)
       .on('mousemove', (event, d) => {
@@ -156,10 +158,11 @@
           .style('top', `${event.clientY + 10}px`)
           .html(`
             <div class="t-title">${d.title}</div>
-            <div class="t-meta">Written by: ${d.author} · published in ${d.year_published}</div>
+            <div class="t-meta">Written by: ${d.author}, published in ${d.year_published}</div>
             <div class="t-meta">Genre: ${d.genre.replace('_', '-')}</div>
             <div class="t-meta">Finished reading: ${d3.timeFormat('%b %Y')(d.date_read)}</div>
-            ${d.language ? `<div class="t-meta">Read the book in ${d.language}</div>` : ''}
+            <div class="t-meta">${d.page_count} pages</div>
+            ${d.language ? `<div class="t-meta">Read in: ${d.language}</div>` : ''}
           `);
       })
       .on('mouseleave', () => tooltip.style('opacity', 0))
@@ -167,19 +170,20 @@
         if (d.has_review) window.location.href = `/reviews/${d.review_slug}/`;
       });
 
-  svg.transition().duration(300).style('opacity', 1);
+  svg.transition().duration(200).style('opacity', 1);
 
   dots.transition()
     .delay((d, i) => i * stagger)
     .duration(dotDuration)
-    .attr('cx', d => x(d.year_published))
+    .attr('cy', d => y(monthKey(d)) + y.bandwidth() / 2)
     .style('opacity', 1);
 
-  // Phase 2 — review rings. Ink Black, deliberately more distant from
-  // the dot (r: 10 vs the dot's r: 4) and heavier stroke (2px), so a
-  // reviewed book reads clearly at a glance.
+  // Rings are sized relative to each dot's own radius (pageRadius + a
+  // fixed gap) rather than a flat number now — otherwise a large book's
+  // dot would grow past a fixed ring and end up sitting inside it
+  // instead of surrounded by it.
   const withReview = books.filter(d => d.has_review);
-  const ringRadius = 10;
+  const ringGap = 5;
   const ringStrokeWidth = 2;
   const ringDuration = 700;
   const ringStagger = Math.min(12, 800 / Math.max(withReview.length, 1));
@@ -191,7 +195,7 @@
     .enter()
     .append('circle')
       .attr('class', 'review-ring')
-      .attr('r', ringRadius)
+      .attr('r', d => pageRadius(d.page_count) + ringGap)
       .attr('fill', 'none')
       .attr('stroke', 'var(--ink)')
       .attr('stroke-width', ringStrokeWidth)
