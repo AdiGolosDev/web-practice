@@ -9,8 +9,8 @@
 {% block content %}
 
 <header id="timeline-header">
-  <h1>Reading Timeline</h1>
-  <p class="lede">Every book, plotted by when it was published against when it was read. Color marks genre; a ring means a review exists — click a ringed dot to read it.</p>
+  <h1>Personal Reading History</h1>
+  <p class="lede">Plunge into my past! Take a look at what I've been reading and when :P</p>
   <div class="legend">
     <span><i class="swatch swatch-fiction"></i>Fiction</span>
     <span><i class="swatch swatch-non-fiction"></i>Non-fiction</span>
@@ -47,30 +47,24 @@
   const today = new Date();
   const currentYear = today.getFullYear();
 
-  // Year range is derived from the data, not hardcoded: start at the
-  // earliest year you've actually read something in, minus a half-year
-  // lead-in (just Jul–Dec of the year before) so the timeline has a
-  // little breathing room at the top without wasting a full empty year.
-  const readYears = books.map(d => d.date_read.getFullYear());
-  const minReadYear = d3.min(readYears);
-  const leadInYear = minReadYear - 1;
+  // Month range: from the earliest book's read month, forward to the
+  // current month, then reversed so the most recent month is at the top
+  // (matches the x-axis convention of "most recent = further along").
+  const earliestRead = d3.min(books, d => d.date_read);
+  const cursor = new Date(earliestRead.getFullYear(), earliestRead.getMonth(), 1);
+  const endCursor = new Date(currentYear, today.getMonth(), 1);
 
   const monthKeys = [];
-  for (let mo = 6; mo <= 11; mo++) { // Jul(6)–Dec(11), half a year
-    monthKeys.push(`${leadInYear}-${String(mo + 1).padStart(2, '0')}`);
+  while (cursor <= endCursor) {
+    monthKeys.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`);
+    cursor.setMonth(cursor.getMonth() + 1);
   }
-  for (let yr = minReadYear; yr <= currentYear; yr++) {
-    const lastMonth = yr === currentYear ? today.getMonth() : 11;
-    for (let mo = 0; mo <= lastMonth; mo++) {
-      monthKeys.push(`${yr}-${String(mo + 1).padStart(2, '0')}`);
-    }
-  }
+  monthKeys.reverse(); // most recent month first = top of the chart
   const yearTicks = monthKeys.filter(k => k.endsWith('-01'));
 
-  const yearCount = (currentYear - minReadYear);
   const minYearHeight = 50;
   const availableHeight = Math.max(0, window.innerHeight - 600);
-  const yearHeight = Math.max(minYearHeight, availableHeight / (yearCount+1));
+  const yearHeight = Math.max(minYearHeight, availableHeight / (monthKeys.length / 12));
   const monthBandHeight = yearHeight / 12;
 
   const pubYears = books.map(d => d.year_published);
@@ -83,11 +77,17 @@
   const width = Math.max(chartWidth, 320);
   const height = monthKeys.length * monthBandHeight;
   const innerWidth = width - margin.left - margin.right;
-  const xRangePadding = innerWidth * 0.05;
   const innerHeight = height;
 
-  const x = d3.scaleLinear().domain(xDomain).range([xRangePadding, innerWidth]);
-  const y = d3.scaleBand().domain(monthKeys).range([0, innerHeight]).padding(0.35);
+  // originGap: the single shared "zero point" for both axes. The x-axis's
+  // left edge and the y-axis's top edge both start exactly here, so they
+  // meet at one clean corner — everything between the SVG's outer edge
+  // and this corner is pure margin, and no dot/ring/gridline can render
+  // before it, since it's baked into the scales' own ranges.
+  const originGap = 40;
+
+  const x = d3.scaleLinear().domain(xDomain).range([originGap, innerWidth]);
+  const y = d3.scaleBand().domain(monthKeys).range([originGap, innerHeight + originGap]).padding(0.35);
 
   const GENRE_COLORS = {
     fiction: 'var(--wine)',
@@ -101,7 +101,7 @@
   const svg = d3.select('#chart-wrap')
     .append('svg')
       .attr('width', width)
-      .attr('height', height + margin.top + margin.bottom)
+      .attr('height', height + originGap + margin.top + margin.bottom)
       .style('opacity', 0);
 
   const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
@@ -110,6 +110,9 @@
     .attr('class', 'axis')
     .call(d3.axisTop(x).tickFormat(d3.format('d')).ticks(8));
 
+  // Plain axisLeft(y) — d3 auto-centers each tick at y(k) + bandwidth()/2
+  // for a band scale. The gridlines below use that exact same formula,
+  // so the label and its line always land on the same pixel.
   g.append('g')
     .attr('class', 'axis')
     .call(d3.axisLeft(y).tickValues(yearTicks).tickFormat(k => k.split('-')[0]));
@@ -121,8 +124,8 @@
       .attr('class', 'year-line')
       .attr('x1', 0)
       .attr('x2', innerWidth)
-      .attr('y1', k => y(k))
-      .attr('y2', k => y(k))
+      .attr('y1', k => y(k) + y.bandwidth() / 2)
+      .attr('y2', k => y(k) + y.bandwidth() / 2)
       .attr('stroke-width', 1)
       .style('opacity', 0.18);
 
@@ -141,7 +144,7 @@
     .enter()
     .append('circle')
       .attr('class', 'book-dot')
-      .attr('cx', xRangePadding)
+      .attr('cx', originGap)
       .attr('cy', d => y(monthKey(d)) + y.bandwidth() / 2)
       .attr('r', 4)
       .attr('fill', d => color(d.genre))
@@ -153,9 +156,10 @@
           .style('top', `${event.clientY + 10}px`)
           .html(`
             <div class="t-title">${d.title}</div>
-            <div class="t-meta">${d.genre.replace('_', '-')} · published ${d.year_published}</div>
-            <div class="t-meta">read ${d3.timeFormat('%b %Y')(d.date_read)}</div>
-            ${d.language ? `<div class="t-meta">${d.language}</div>` : ''}
+            <div class="t-meta">Written by: ${d.author} · published in ${d.year_published}</div>
+            <div class="t-meta">Genre: ${d.genre.replace('_', '-')}</div>
+            <div class="t-meta">Finished reading: ${d3.timeFormat('%b %Y')(d.date_read)}</div>
+            ${d.language ? `<div class="t-meta">Read the book in ${d.language}</div>` : ''}
           `);
       })
       .on('mouseleave', () => tooltip.style('opacity', 0))
@@ -171,10 +175,9 @@
     .attr('cx', d => x(d.year_published))
     .style('opacity', 1);
 
-  // Phase 2 — review rings. Deliberately Ink Black rather than
-  // genre-colored, with more distance from the dot (r: 10 vs the dot's
-  // r: 4) and a heavier stroke (2px) so a reviewed book reads clearly
-  // at a glance, then the same spiral-in entrance as before.
+  // Phase 2 — review rings. Ink Black, deliberately more distant from
+  // the dot (r: 10 vs the dot's r: 4) and heavier stroke (2px), so a
+  // reviewed book reads clearly at a glance.
   const withReview = books.filter(d => d.has_review);
   const ringRadius = 10;
   const ringStrokeWidth = 2;

@@ -33,6 +33,7 @@ def books_api(request):
         has_review = review is not None and review.published
         data.append({
             'title': book.title,
+            'author': book.author,
             'genre': book.genre,
             'language': book.language.name if book.language else None,
             'description': book.description,
