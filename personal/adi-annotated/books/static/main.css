@@ -1,17 +1,42 @@
-/* ---------------------------------------------------------------
-   Design tokens — the whole palette lives here, once. Every other
-   stylesheet on the site (like graph.css) reads these instead of
-   hardcoding hex values, so a palette change only ever happens here.
---------------------------------------------------------------- */
-:root {
-  --ink: #06080f; /* Ink Black — text, header/footer bg */
-  --paper: #e8dcb8; /* Pearl Beige — main background, "aged paper" */
-  --wine: #84241f; /* Dark Wine — punctuated elements, fiction dots */
-  --teal: #125154; /* Dark Teal — punctuated elements, non-fiction dots */
-  --periwinkle: #cbc5ea; /* Periwinkle — accent, only used against --ink (fails contrast on paper) */
+/* ==========================================================================
+   AdiAnnotated — main stylesheet
+   Notebook / library themed portfolio for books read & reviews written.
+   ========================================================================== */
 
-  --font-serif: "Fraunces", serif;
-  --font-sans: "Inter", sans-serif;
+:root {
+  /* ---- color ---- */
+  --paper: #efe4cb; /* page background — warm parchment   */
+  --paper-card: #f7f0dd; /* lighter tone for the graph "card"  */
+  --paper-shadow: #d9c9a0; /* deeper paper for shadows/edges     */
+  --ink: #26212e; /* primary text                       */
+  --ink-soft: #514a5c; /* secondary text                     */
+  --rule: rgba(38, 33, 46, 0.14); /* faint notebook lines */
+  --rule-strong: rgba(38, 33, 46, 0.28);
+
+  --wine: #9c3b4d; /* fiction dots / accent              */
+  --teal: #1f6e63; /* non-fiction dots / accent          */
+  --gold: #b8862e; /* logo / highlight accent            */
+
+  --postit-yellow: #f3d77b;
+  --postit-rose: #e7a6a0;
+
+  /* ---- type ---- */
+  --font-display: "Fraunces", "Iowan Old Style", serif;
+  --font-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-ui: "Inter", -apple-system, sans-serif;
+  --font-hand: "Caveat", cursive;
+  --font-script: "Parisienne", cursive;
+
+  --header-h: 68px;
+
+  /* ---- chart card sizing ----
+     Mirrors index.html's JS: chartWidth = min(innerWidth * 0.8, 1600).
+     #chart-wrap hugs its content (the svg) plus its own padding, so its
+     rendered width is svg-width + 2*chart-pad — this variable reproduces
+     that total explicitly so other elements (the library section below)
+     can be sized to match it exactly instead of guessing at it. */
+  --chart-pad: clamp(0.75rem, 2vw, 1.75rem);
+  --chart-card-width: min(80vw, calc(1600px + 2 * var(--chart-pad)));
 }
 
 * {
@@ -22,92 +47,603 @@ html {
   scroll-behavior: smooth;
 }
 
+html,
 body {
-  margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  line-height: 1.5;
+  height: 100%;
 }
 
-h1,
-h2,
-h3 {
-  font-family: var(--font-serif);
-  font-weight: 600;
-  margin: 0 0 0.4em;
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--paper);
+  /* faint ruled notebook lines, fading toward the edges */
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 37px,
+      var(--rule) 38px,
+      transparent 39px
+    ),
+    radial-gradient(
+      ellipse at 50% 0%,
+      rgba(239, 228, 203, 0) 60%,
+      var(--paper) 100%
+    );
+  color: var(--ink);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
-  color: var(--wine);
-  text-decoration: none;
-}
-a:hover {
-  color: var(--teal);
-  text-decoration: underline;
+  color: inherit;
 }
 
-/* -----------------------------------------------------------
-   Header / nav — Ink Black band. This is the one place
-   Periwinkle gets used, since it only has real contrast
-   against dark backgrounds, not against Pearl Beige.
------------------------------------------------------------- */
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* ---- focus visibility (accessibility floor) ---- */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
+
+main {
+  flex: 1 0 auto;
+}
+
 .site-nav {
-  background: var(--ink);
-  padding: 16px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
   display: flex;
-  gap: 20px;
-}
-.site-nav a {
-  color: var(--paper);
-  font-family: var(--font-sans);
-  font-weight: 500;
-}
-.site-nav a:hover {
-  color: var(--periwinkle);
-  text-decoration: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: var(--header-h);
+  padding: 0 clamp(1rem, 4vw, 2.5rem);
+  background: var(--paper-card);
+  border-bottom: 1px solid var(--rule-strong);
+  box-shadow: 0 1px 0 rgba(38, 33, 46, 0.05);
 }
 
-/* -----------------------------------------------------------
-   Footer — same dark band treatment as the nav, for a
-   consistent "frame" around the paper-colored content.
------------------------------------------------------------- */
-.site-footer {
-  background: var(--ink);
-  color: var(--paper);
-  text-align: center;
-  padding: 20px;
-  font-size: 13px;
+.site-nav .brand {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
 }
-.site-footer p {
+.site-nav .brand .brand-adi {
+  color: var(--wine);
+}
+.site-nav .brand .brand-annotated {
+  color: var(--teal);
+  font-family: var(--font-script);
+  font-size: 1.35em;
+  font-weight: 400;
+  margin-left: 0.05em;
+}
+
+.site-nav .nav-links {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.9rem, 2.5vw, 1.75rem);
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+}
+.site-nav .nav-links a {
+  text-decoration: none;
+  color: var(--ink-soft);
+  position: relative;
+  padding: 0.2rem 0;
+}
+.site-nav .nav-links a:hover {
+  color: var(--ink);
+}
+.site-nav .nav-links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: -2px;
+  height: 1.5px;
+  background: var(--gold);
+  transition: right 0.2s ease;
+}
+.site-nav .nav-links a:hover::after {
+  right: 0;
+}
+
+.nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .nav-toggle {
+    display: block;
+  }
+  .site-nav .nav-links {
+    display: none;
+    position: absolute;
+    top: var(--header-h);
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.9rem;
+    background: var(--paper-card);
+    border-bottom: 1px solid var(--rule-strong);
+    padding: 1.2rem clamp(1rem, 4vw, 2.5rem);
+  }
+  .site-nav .nav-links.open {
+    display: flex;
+  }
+}
+
+/* ==========================================================================
+   Generic page content (about / contact / story / review)
+   ========================================================================== */
+
+main > .page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: clamp(3rem, 8vw, 5rem) 1.5rem 5rem;
+}
+main > .page h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  margin-bottom: 1.5rem;
+}
+main > .page p {
+  font-size: 1.05rem;
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+.site-footer {
+  flex-shrink: 0;
+  padding: clamp(2.25rem, 5vw, 3rem) 1.5rem clamp(1.75rem, 4vw, 2.25rem);
+  background: var(--paper-card);
+  border-top: 1px solid var(--rule-strong);
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.4) inset;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  text-align: center;
+}
+
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: clamp(1.5rem, 4vw, 2.25rem);
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+}
+.footer-links a {
+  text-decoration: none;
+  color: var(--ink-soft);
+  position: relative;
+  padding: 0.15rem 0;
+}
+.footer-links a:hover {
+  color: var(--ink);
+}
+.footer-links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: -2px;
+  height: 1.5px;
+  background: var(--gold);
+  transition: right 0.2s ease;
+}
+.footer-links a:hover::after {
+  right: 0;
+}
+
+/* placeholder social row — small lettered badges standing in for real
+   icons until profile links exist */
+.footer-social {
+  display: flex;
+  gap: 0.6rem;
+}
+.footer-social a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.footer-social a:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.footer-divider {
+  width: 40px;
+  height: 1px;
+  background: var(--rule-strong);
+  margin: 0.15rem 0;
+}
+
+.footer-copy {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+/* ==========================================================================
+   Library section — stacked "windows" (left) + quote (right)
+   ========================================================================== */
+
+.library-section {
+  /* same total width + centering as the chart card above, so this
+     section's left and right edges land exactly on the card's edges
+     instead of being independently centered against the viewport */
+  width: var(--chart-card-width);
+  margin: 0 auto;
+  padding: clamp(2.5rem, 6vw, 4rem) 0;
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) 1fr;
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: center;
+}
+
+.windows-col {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.5rem, 3vw, 2.25rem);
+}
+
+.lit-window {
+  --window-color: var(--wine);
+  position: relative;
+  background: var(--paper-card);
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  /* a slightly raised sheet of paper, not an app chrome */
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 10px 22px rgba(38, 33, 46, 0.14),
+    0 2px 5px rgba(38, 33, 46, 0.08);
+  padding: 1.15rem 1.3rem 1.35rem;
+}
+/* inset "mat" line, like a frame around the page */
+.lit-window::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid var(--window-color);
+  opacity: 0.45;
+  pointer-events: none;
+}
+.lit-window--stories {
+  --window-color: var(--wine);
+}
+.lit-window--reviews {
+  --window-color: var(--teal);
+}
+
+.lit-window .window-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0 0 0.5rem;
+  margin-bottom: 0.6rem;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--font-hand);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--window-color);
+}
+.lit-window .window-bar .dot {
+  display: none;
+}
+
+.lit-window ul {
+  list-style: none;
+  margin: 0;
+  padding: 0 0.1rem 0;
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  line-height: 1.5;
+}
+.lit-window li + li {
+  margin-top: 0.65rem;
+}
+.lit-window li a {
+  text-decoration: none;
+  color: var(--ink);
+  background-image: linear-gradient(var(--window-color), var(--window-color));
+  background-repeat: no-repeat;
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  transition: background-size 0.2s ease;
+  padding-bottom: 1px;
+}
+.lit-window li a:hover {
+  background-size: 100% 1px;
+}
+
+/* ==========================================================================
+   Book recommendation section
+   ========================================================================== */
+
+.recommendation-section {
+  /* same total width + centering as the chart card and library section
+     above, so all three line up */
+  width: var(--chart-card-width);
+  margin: 0 auto;
+  padding: clamp(1rem, 3vw, 2rem) 0 clamp(6rem, 12vw, 9rem);
+}
+
+/* outer grid: [title + body] vs [cover]. align-items:stretch (the grid
+   default) makes the cover match the *whole* left side's height —
+   title included — instead of just the details column, so it now runs
+   all the way to the top of the card. */
+.recommendation-card {
+  display: grid;
+  grid-template-columns: 1fr minmax(170px, 230px);
+  gap: clamp(1.75rem, 4vw, 3rem);
+  background: var(--paper-card);
+  border: 1px solid var(--rule-strong);
+  border-radius: 4px;
+  box-shadow:
+    0 12px 30px rgba(38, 33, 46, 0.16),
+    0 2px 6px rgba(38, 33, 46, 0.08);
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.rec-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* card title, doubling as the section label — cursive like the quote
+   text, so it reads as this card's "heading" rather than a UI label.
+   width: fit-content keeps the underline hugging just the text. */
+.rec-card-title {
+  width: fit-content;
+  margin: 0 0 clamp(1.25rem, 3vw, 1.75rem);
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--font-script);
+  font-weight: 400;
+  font-size: clamp(1.9rem, 4vw, 2.4rem);
+  color: var(--wine);
+}
+
+/* two columns: details+link / description. align-items:stretch makes
+   both match whichever is tallest — that's what keeps the review link
+   pinned to the bottom and lets the row grow when the description
+   runs long, with the outer grid then stretching the cover to match. */
+.rec-body {
+  display: grid;
+  grid-template-columns: minmax(200px, 260px) 1fr;
+  gap: clamp(1.75rem, 4vw, 3rem);
+  flex: 1;
+}
+
+.rec-details {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.rec-heading {
+  margin: 0 0 1.25rem;
+}
+.rec-book-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 2.5vw, 1.45rem);
+  margin: 0 0 0.2rem;
+  color: var(--ink);
+}
+.rec-author {
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  color: var(--ink-soft);
   margin: 0;
 }
 
-main {
-  min-height: 60vh;
+.rec-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0;
+}
+.rec-meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.rec-meta-row dt {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.rec-meta-row dd {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--ink);
 }
 
-/* -----------------------------------------------------------
-   Small reusable pieces other pages/templates can reach for
-   without writing new CSS — a tag/pill (e.g. genre or language
-   label) and a soft panel/card background.
------------------------------------------------------------- */
-.tag {
+/* pushed to the bottom of .rec-details regardless of how tall the
+   column ends up being */
+.rec-review-link {
   display: inline-block;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--paper);
-  background: var(--wine);
+  align-self: flex-start;
+  margin-top: auto;
+  padding-top: 1.25rem;
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--wine);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 1px;
+  transition: color 0.15s ease;
 }
-.tag--teal {
-  background: var(--teal);
+.rec-review-link:hover {
+  color: var(--teal);
 }
 
-.panel {
-  background: color-mix(in srgb, var(--paper) 88%, var(--ink) 12%);
-  border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
-  border-radius: 4px;
-  padding: 16px 18px;
+.rec-description {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.rec-description p {
+  margin: 0;
+}
+
+/* placeholder for the fetched cover image; swap for an <img> later —
+   height: 100% keeps it matched to the full left-hand column (title
+   through the review link) via the outer grid's stretch alignment,
+   whatever that height ends up being */
+.recommendation-cover {
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  background: #fff;
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+  box-shadow: 0 6px 16px rgba(38, 33, 46, 0.14);
+}
+
+@media (max-width: 760px) {
+  .recommendation-card {
+    grid-template-columns: 1fr;
+  }
+  .rec-body {
+    grid-template-columns: 1fr;
+  }
+  .rec-details {
+    height: auto;
+  }
+  .rec-review-link {
+    margin-top: 1.25rem;
+    padding-top: 0;
+  }
+  .recommendation-cover {
+    height: auto;
+    aspect-ratio: 2 / 3;
+    max-width: 220px;
+    margin: 0 auto;
+  }
+}
+
+/* ==========================================================================
+   Quote section
+   ========================================================================== */
+
+.quote-section {
+  position: relative;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  text-align: center;
+}
+
+/* A soft, same-color "clearing" behind the quote only — it sits above the
+   page's ruled lines and fades them out locally via a radial mask, rather
+   than drawing a hard-edged shape that would compete with the underlines
+   inside the quote itself. */
+.quote-section::before {
+  content: "";
+  position: absolute;
+  inset: -15% -10%;
+  background: var(--paper);
+  -webkit-mask-image: radial-gradient(
+    ellipse 55% 60% at 50% 50%,
+    #000 45%,
+    transparent 78%
+  );
+  mask-image: radial-gradient(
+    ellipse 55% 60% at 50% 50%,
+    #000 45%,
+    transparent 78%
+  );
+  z-index: 0;
+  pointer-events: none;
+}
+.quote-section > * {
+  position: relative;
+  z-index: 1;
+}
+.quote-section .quote-label {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  margin-bottom: 1rem;
+}
+.quote-section blockquote {
+  margin: 0;
+  font-family: var(--font-script);
+  font-size: clamp(1.6rem, 3.4vw, 2.1rem);
+  line-height: 1.65;
+  color: var(--ink);
+}
+.quote-section blockquote span {
+  border-bottom: 1px solid var(--rule-strong);
+  padding-bottom: 2px;
+}
+.quote-section cite {
+  display: block;
+  margin-top: 1.1rem;
+  font-family: var(--font-ui);
+  font-style: normal;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 760px) {
+  .library-section {
+    grid-template-columns: 1fr;
+  }
+  .windows-col {
+    max-width: 420px;
+    margin: 0 auto;
+    width: 100%;
+  }
 }

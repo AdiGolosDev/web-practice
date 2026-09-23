@@ -3,6 +3,8 @@
 {% block title %}{{ review.title }} — Adi Books{% endblock %}
 
 {% block content %}
+<div class="page">
     <h1>{{ review.title }}</h1>
     <div>{{ content_html|safe }}</div>
+</div>
 {% endblock %}

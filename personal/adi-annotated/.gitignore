@@ -21,3 +21,4 @@ staticfiles/
 .idea/
 .DS_Store
 *.prettierignore
+*.png

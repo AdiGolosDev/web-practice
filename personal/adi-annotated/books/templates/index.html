@@ -8,6 +8,8 @@
 
 {% block content %}
 
+<section class="graph-hero">
+
 <header id="timeline-header">
   <h1>Personal Reading History</h1>
   <p class="lede">Plunge into my past! Take a look at what I've been reading and when :P</p>
@@ -21,207 +23,99 @@
   <div id="chart-wrap"></div>
 </main>
 
+<div class="scroll-cue"><span>keep scrolling</span><span class="chevron"></span></div>
+
+</section>
+
 <div id="tooltip"></div>
 
-<script>
-(async function () {
-  // ---------------------------------------------------------------
-  // 1. DATA
-  // ---------------------------------------------------------------
-  const res = await fetch('/api/books/');
-  if (!res.ok) {
-    console.error('Failed to load /api/books/:', res.status);
-    return;
-  }
-  const raw = await res.json();
+<section class="library-section">
+  <div class="windows-col">
+    <div class="lit-window lit-window--stories">
+      <div class="window-bar"><span class="dot"></span>Recent Stories</div>
+      <ul>
+        <li><a href="#">Lorem ipsum dolor sit amet</a></li>
+        <li><a href="#">Consectetur adipiscing elit</a></li>
+        <li><a href="#">Sed do eiusmod tempor</a></li>
+        <li><a href="#">Ut labore et dolore magna</a></li>
+        <li><a href="#">Ut enim ad minim veniam</a></li>
+      </ul>
+    </div>
 
-  const books = raw.map(b => {
-    const [ry, rm] = b.date_read.split('-').map(Number);
-    return { ...b, date_read: new Date(ry, rm - 1, 1) };
-  });
+    <div class="lit-window lit-window--reviews">
+      <div class="window-bar"><span class="dot"></span>Recent Book Reviews</div>
+      <ul>
+        <li><a href="#">Quis nostrud exercitation</a></li>
+        <li><a href="#">Duis aute irure dolor</a></li>
+        <li><a href="#">Excepteur sint occaecat</a></li>
+        <li><a href="#">Cupidatat non proident</a></li>
+        <li><a href="#">Sunt in culpa qui officia</a></li>
+      </ul>
+    </div>
+  </div>
 
-  // ---------------------------------------------------------------
-  // 2. SCALES
-  // ---------------------------------------------------------------
-  const margin = { top: 20, right: 40, bottom: 20, left: 40 };
-  const today = new Date();
-  const currentYear = today.getFullYear();
+  <div class="quote-section">
+    <p class="quote-label">quote of the day</p>
+    <blockquote>
+      <span>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.</span>
+    </blockquote>
+    <cite>— Lorem Ipsum</cite>
+  </div>
+</section>
 
-  const earliestRead = d3.min(books, d => d.date_read);
-  const cursor = new Date(earliestRead.getFullYear(), earliestRead.getMonth(), 1);
-  const endCursor = new Date(currentYear, today.getMonth(), 1);
+<!-- Book recommendation of the month.
+Assumes the view passes a `book_of_month` object in the context
+with these fields — rename to match your actual model.
+-->
+<section class="recommendation-section">
+  <div class="recommendation-card">
+    <div class="rec-main">
+      <h3 class="rec-card-title">Book recommendation of the month</h3>
 
-  const monthKeys = [];
-  while (cursor <= endCursor) {
-    monthKeys.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`);
-    cursor.setMonth(cursor.getMonth() + 1);
-  }
-  // chronological order, earliest first = top of the chart (no reverse)
-  const yearTicks = monthKeys.filter(k => k.endsWith('-01'));
+      <div class="rec-body">
+        <div class="rec-details">
+          <div class="rec-heading">
+            <p class="rec-book-title">{{ book_of_month.title }}The Elephant Vanishes</p>
+            <p class="rec-author">by {{ book_of_month.author }}Haruki Murakami</p>
+          </div>
 
-  const minYearHeight = 50;
-  const availableHeight = Math.max(0, window.innerHeight - 600);
-  const yearHeight = Math.max(minYearHeight, availableHeight / (monthKeys.length / 12));
-  const monthBandHeight = yearHeight / 12;
+          <dl class="rec-meta">
+            <div class="rec-meta-row">
+              <dt>Published</dt>
+              <dd>{{ book_of_month.year_published }}1982</dd>
+            </div>
+            <div class="rec-meta-row">
+              <dt>Original language</dt>
+              <dd>{{ book_of_month.language }}Japanese</dd>
+            </div>
+            <div class="rec-meta-row">
+              <dt>Pages</dt>
+              <dd>~ {{ book_of_month.page_count }}250</dd>
+            </div>
+            <div class="rec-meta-row">
+              <dt>Difficulty</dt>
+              <dd>{{ book_of_month.difficulty }}3/10</dd>
+            </div>
+            <div class="rec-meta-row">
+              <dt>Personal rating</dt>
+              <dd>{{ book_of_month.rating }}6/10</dd>
+            </div>
+          </dl>
 
-  const pubYears = books.map(d => d.year_published);
-  const minPubYear = d3.min(pubYears);
-  const xDomain = [minPubYear, currentYear];
+          <a class="rec-review-link" href="/reviews/the-elephant-vanishes">Read the full review &rarr;</a>
+        </div>
 
-  const monthKey = d => `${d.date_read.getFullYear()}-${String(d.date_read.getMonth() + 1).padStart(2, '0')}`;
+        <div class="rec-description">
+          <p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est, omnis dolor repellendus.</p>
+        </div>
+      </div>
+    </div>
 
-  const chartWidth = Math.min(window.innerWidth * 0.8, 1600);
-  const width = Math.max(chartWidth, 320);
-  const height = monthKeys.length * monthBandHeight;
-  const innerWidth = width - margin.left - margin.right;
-  const innerHeight = height;
+    <img src="https://m.media-amazon.com/images/S/compressed.photo.goodreads.com/books/1642991320i/9555.jpg" alt="">
+    <!-- <div class="recommendation-cover"></div> -->
+  </div>
+</section>
 
-  const originGap = 40;
-
-  const x = d3.scaleLinear().domain(xDomain).range([originGap, innerWidth]);
-  const y = d3.scaleBand().domain(monthKeys).range([originGap, innerHeight + originGap]).padding(0.35);
-
-  const GENRE_COLORS = {
-    fiction: 'var(--wine)',
-    non_fiction: 'var(--teal)',
-  };
-  const color = genre => GENRE_COLORS[genre] || '#999';
-
-  // Dot radius by page count. scaleSqrt (not scaleLinear) because for a
-  // circle, it's *area* that reads as "size" to the eye, not radius —
-  // a linear radius scale would make long books look disproportionately
-  // huge. clamp(true) means a 60-page book and a 2000-page book both
-  // just sit at the scale's floor/ceiling rather than going off-range.
-  const pageRadius = d3.scaleSqrt()
-    .domain([100, 1000])   // 100pg → small (matches the old fixed r:4), 1000pg+ → capped large
-    .range([4, 11])
-    .clamp(true);
-
-  // ---------------------------------------------------------------
-  // 3. DRAW
-  // ---------------------------------------------------------------
-  const svg = d3.select('#chart-wrap')
-    .append('svg')
-      .attr('width', width)
-      .attr('height', height + originGap + margin.top + margin.bottom)
-      .style('opacity', 0);
-
-  const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
-
-  g.append('g')
-    .attr('class', 'axis')
-    .call(d3.axisTop(x).tickFormat(d3.format('d')).ticks(8));
-
-  g.append('g')
-    .attr('class', 'axis')
-    .call(d3.axisLeft(y).tickValues(yearTicks).tickFormat(k => k.split('-')[0]));
-
-  g.selectAll('.year-line')
-    .data(yearTicks)
-    .enter()
-    .append('line')
-      .attr('class', 'year-line')
-      .attr('x1', 0)
-      .attr('x2', innerWidth)
-      .attr('y1', k => y(k) + y.bandwidth() / 2)
-      .attr('y2', k => y(k) + y.bandwidth() / 2)
-      .attr('stroke-width', 1)
-      .style('opacity', 0.18);
-
-  // ---------------------------------------------------------------
-  // 4. ENTER ANIMATION — dots fall top-to-bottom (rain), oldest read
-  // first, with a fixed noticeable gap between each one's entrance.
-  // ---------------------------------------------------------------
-  const sortedByRead = [...books].sort((a, b) => a.date_read - b.date_read); // oldest first
-  const stagger = 80; // fixed ms between each book's fall — stays noticeable regardless of book count.
-                        // Total intro time = books.length * stagger + dotDuration, so this grows as
-                        // your library does — bring dotDuration down first if it starts feeling slow.
-  const dotDuration = 1000;
-  const phase1TotalMs = (sortedByRead.length - 1) * stagger + dotDuration;
-
-  const tooltip = d3.select('#tooltip');
-
-  const dots = g.selectAll('.book-dot')
-    .data(sortedByRead)
-    .enter()
-    .append('circle')
-      .attr('class', 'book-dot')
-      .attr('cx', d => x(d.year_published))
-      .attr('cy', originGap - 30)
-      .attr('r', d => pageRadius(d.page_count))
-      .attr('fill', d => color(d.genre))
-      .style('opacity', 0)
-      .on('mousemove', (event, d) => {
-        tooltip
-          .style('opacity', 1)
-          .style('left', `${event.clientX + 14}px`)
-          .style('top', `${event.clientY + 10}px`)
-          .html(`
-            <div class="t-title">${d.title}</div>
-            <div class="t-meta">Written by: ${d.author}, published in ${d.year_published}</div>
-            <div class="t-meta">Genre: ${d.genre.replace('_', '-')}</div>
-            <div class="t-meta">Finished reading: ${d3.timeFormat('%b %Y')(d.date_read)}</div>
-            <div class="t-meta">${d.page_count} pages</div>
-            ${d.language ? `<div class="t-meta">Read in: ${d.language}</div>` : ''}
-          `);
-      })
-      .on('mouseleave', () => tooltip.style('opacity', 0))
-      .on('click', (event, d) => {
-        if (d.has_review) window.location.href = `/reviews/${d.review_slug}/`;
-      });
-
-  svg.transition().duration(200).style('opacity', 1);
-
-  dots.transition()
-    .delay((d, i) => i * stagger)
-    .duration(dotDuration)
-    .attr('cy', d => y(monthKey(d)) + y.bandwidth() / 2)
-    .style('opacity', 1);
-
-  // Rings are sized relative to each dot's own radius (pageRadius + a
-  // fixed gap) rather than a flat number now — otherwise a large book's
-  // dot would grow past a fixed ring and end up sitting inside it
-  // instead of surrounded by it.
-  const withReview = books.filter(d => d.has_review);
-  const ringGap = 5;
-  const ringStrokeWidth = 2;
-  const ringDuration = 700;
-  const ringStagger = Math.min(12, 800 / Math.max(withReview.length, 1));
-  const orbitRadius = 16;
-  const orbitTurns = 1.25;
-
-  const rings = g.selectAll('.review-ring')
-    .data(withReview)
-    .enter()
-    .append('circle')
-      .attr('class', 'review-ring')
-      .attr('r', d => pageRadius(d.page_count) + ringGap)
-      .attr('fill', 'none')
-      .attr('stroke', 'var(--ink)')
-      .attr('stroke-width', ringStrokeWidth)
-      .style('opacity', 0);
-
-  rings.transition()
-    .delay((d, i) => phase1TotalMs + i * ringStagger)
-    .duration(ringDuration)
-    .style('opacity', 1)
-    .attrTween('cx', function (d) {
-      const targetX = x(d.year_published);
-      return t => {
-        const angle = orbitTurns * 2 * Math.PI * (1 - t);
-        const r = orbitRadius * (1 - t);
-        return targetX + r * Math.cos(angle);
-      };
-    })
-    .attrTween('cy', function (d) {
-      const targetY = y(monthKey(d)) + y.bandwidth() / 2;
-      return t => {
-        const angle = orbitTurns * 2 * Math.PI * (1 - t);
-        const r = orbitRadius * (1 - t);
-        return targetY + r * Math.sin(angle);
-      };
-    });
-})();
-</script>
+<script src="{% static 'graph.js' %}"></script>
 
 {% endblock %}

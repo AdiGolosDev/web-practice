@@ -1,30 +1,80 @@
-#timeline-header {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 48px 24px 24px;
-}
-#timeline-header p.lede {
-  color: var(--ink);
-  opacity: 0.7;
-  max-width: 60ch;
-  margin: 0;
+/* ==========================================================================
+   Reading-history graph — hero treatment
+   The graph is the main feature: it gets its own "index card" surface so it
+   visually pops against the notebook-page background, without breaking the
+   theme. Only presentational rules here — no changes to the D3 logic.
+   ========================================================================== */
+
+.graph-hero {
+  position: relative;
+  min-height: calc(100vh - var(--header-h));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(2rem, 5vw, 3.5rem) clamp(1rem, 4vw, 3rem)
+    clamp(3rem, 6vw, 4rem);
+  background: linear-gradient(180deg, var(--paper-card) 0%, var(--paper) 100%);
+  border-bottom: 1px solid var(--rule);
+  overflow: hidden;
 }
 
-.legend {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-  margin-top: 20px;
-  font-size: 13px;
+#timeline-main {
+  width: var(--chart-card-width);
 }
-.legend span {
+
+/* a subtle deckle-edge / card feel behind the chart itself */
+#chart-wrap {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  background: var(--paper-card);
+  border: 1px solid var(--rule-strong);
+  border-radius: 4px;
+  box-shadow:
+    0 12px 30px rgba(38, 33, 46, 0.16),
+    0 2px 6px rgba(38, 33, 46, 0.08);
+  padding: var(--chart-pad);
+  overflow-x: auto;
+}
+
+#timeline-header {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto clamp(1.5rem, 4vw, 2.5rem);
+}
+
+#timeline-header h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.1rem, 5vw, 3.1rem);
+  margin: 0 0 0.5rem;
+  color: var(--ink);
+}
+
+#timeline-header .lede {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+  margin: 0 0 1.1rem;
+}
+
+#timeline-header .legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+#timeline-header .legend span {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.45rem;
 }
 .swatch {
-  width: 9px;
-  height: 9px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
   display: inline-block;
 }
@@ -35,49 +85,27 @@
   background: var(--teal);
 }
 
-#timeline-main {
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 0 3vw 64px;
-  overflow-x: auto;
-}
-#chart-wrap {
-  position: relative;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-svg {
-  display: block;
-  background: var(--paper);
-}
-
+/* d3 axis text */
 .axis text {
-  fill: var(--ink);
-  opacity: 0.6;
+  font-family: var(--font-ui);
   font-size: 11px;
-  font-family: var(--font-sans);
+  fill: var(--ink-soft);
 }
 .axis path,
 .axis line {
-  stroke: var(--ink);
-  opacity: 0.25;
+  stroke: var(--rule-strong);
 }
+
 .year-line {
-  stroke: var(--ink);
+  stroke: var(--ink-soft);
 }
 
 .book-dot {
   cursor: pointer;
-}
-.book-dot:hover {
-  stroke: var(--ink);
+  stroke: var(--paper-card);
   stroke-width: 1px;
 }
 
-/* review rings: deliberately Ink Black rather than genre-colored,
-   with extra breathing room from the dot and a heavier stroke so
-   "this one has a review" reads clearly at a glance */
 .review-ring {
   pointer-events: none;
 }
@@ -85,21 +113,60 @@ svg {
 #tooltip {
   position: fixed;
   pointer-events: none;
-  background: var(--paper);
-  border: 1px solid var(--ink);
-  border-radius: 3px;
-  padding: 8px 10px;
-  font-size: 12px;
-  max-width: 220px;
+  z-index: 200;
   opacity: 0;
-  transition: opacity 0.1s ease;
-  z-index: 10;
-  color: var(--ink);
+  background: var(--ink);
+  color: var(--paper-card);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 0.6rem 0.8rem;
+  border-radius: 4px;
+  max-width: 240px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
 #tooltip .t-title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
   font-weight: 600;
-  margin-bottom: 2px;
+  margin-bottom: 0.2rem;
 }
 #tooltip .t-meta {
-  opacity: 0.7;
+  opacity: 0.85;
+}
+
+/* scroll cue beneath the hero, hinting there's more below */
+.scroll-cue {
+  margin-top: clamp(1.5rem, 4vw, 2.5rem);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  color: var(--ink-soft);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  opacity: 0.75;
+}
+.scroll-cue .chevron {
+  width: 9px;
+  height: 9px;
+  border-right: 1.5px solid var(--ink-soft);
+  border-bottom: 1.5px solid var(--ink-soft);
+  transform: rotate(45deg);
+  animation: cue-bounce 1.8s ease-in-out infinite;
+}
+@keyframes cue-bounce {
+  0%,
+  100% {
+    transform: translateY(0) rotate(45deg);
+  }
+  50% {
+    transform: translateY(5px) rotate(45deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-cue .chevron {
+    animation: none;
+  }
 }

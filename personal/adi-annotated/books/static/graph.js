@@ -1,0 +1,227 @@
+(async function () {
+  // ---------------------------------------------------------------
+  // 1. DATA
+  // ---------------------------------------------------------------
+  const res = await fetch("/api/books/");
+  if (!res.ok) {
+    console.error("Failed to load /api/books/:", res.status);
+    return;
+  }
+  const raw = await res.json();
+
+  const books = raw.map((b) => {
+    const [ry, rm] = b.date_read.split("-").map(Number);
+    return { ...b, date_read: new Date(ry, rm - 1, 1) };
+  });
+
+  // ---------------------------------------------------------------
+  // 2. SCALES
+  // ---------------------------------------------------------------
+  const margin = { top: 20, right: 40, bottom: 20, left: 40 };
+  const today = new Date();
+  const currentYear = today.getFullYear();
+
+  const earliestRead = d3.min(books, (d) => d.date_read);
+  const cursor = new Date(
+    earliestRead.getFullYear(),
+    earliestRead.getMonth(),
+    1,
+  );
+  const endCursor = new Date(currentYear, today.getMonth(), 1);
+
+  const monthKeys = [];
+  while (cursor <= endCursor) {
+    monthKeys.push(
+      `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`,
+    );
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+  // chronological order, earliest first = top of the chart (no reverse)
+  const yearTicks = monthKeys.filter((k) => k.endsWith("-01"));
+
+  const minYearHeight = 50;
+  const availableHeight = Math.max(0, window.innerHeight - 600);
+  const yearHeight = Math.max(
+    minYearHeight,
+    availableHeight / (monthKeys.length / 12),
+  );
+  const monthBandHeight = yearHeight / 12;
+
+  const pubYears = books.map((d) => d.year_published);
+  const minPubYear = d3.min(pubYears);
+  const xDomain = [minPubYear, currentYear];
+
+  const monthKey = (d) =>
+    `${d.date_read.getFullYear()}-${String(d.date_read.getMonth() + 1).padStart(2, "0")}`;
+
+  const chartWidth = Math.min(window.innerWidth * 0.8, 1600);
+  const width = Math.max(chartWidth, 320);
+  const height = monthKeys.length * monthBandHeight;
+  const innerWidth = width - margin.left - margin.right;
+  const innerHeight = height;
+
+  const originGap = 40;
+
+  const x = d3
+    .scaleLinear()
+    .domain(xDomain)
+    .range([originGap, innerWidth - originGap]);
+  const y = d3
+    .scaleBand()
+    .domain(monthKeys)
+    .range([originGap, innerHeight + originGap])
+    .padding(0.35);
+
+  const GENRE_COLORS = {
+    fiction: "var(--wine)",
+    non_fiction: "var(--teal)",
+  };
+  const color = (genre) => GENRE_COLORS[genre] || "#999";
+
+  // Dot radius by page count. scaleSqrt (not scaleLinear) because for a
+  // circle, it's *area* that reads as "size" to the eye, not radius —
+  // a linear radius scale would make long books look disproportionately
+  // huge. clamp(true) means a 60-page book and a 2000-page book both
+  // just sit at the scale's floor/ceiling rather than going off-range.
+  const pageRadius = d3
+    .scaleSqrt()
+    .domain([100, 1000]) // 100pg → small (matches the old fixed r:4), 1000pg+ → capped large
+    .range([4, 11])
+    .clamp(true);
+
+  // ---------------------------------------------------------------
+  // 3. DRAW
+  // ---------------------------------------------------------------
+  const svg = d3
+    .select("#chart-wrap")
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height + originGap + margin.top + margin.bottom)
+    .style("opacity", 0);
+
+  const g = svg
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  g.append("g")
+    .attr("class", "axis")
+    .call(d3.axisTop(x).tickFormat(d3.format("d")).ticks(8));
+
+  g.append("g")
+    .attr("class", "axis")
+    .call(
+      d3
+        .axisLeft(y)
+        .tickValues(yearTicks)
+        .tickFormat((k) => k.split("-")[0]),
+    );
+
+  g.selectAll(".year-line")
+    .data(yearTicks)
+    .enter()
+    .append("line")
+    .attr("class", "year-line")
+    .attr("x1", 0)
+    .attr("x2", innerWidth)
+    .attr("y1", (k) => y(k) + y.bandwidth() / 2)
+    .attr("y2", (k) => y(k) + y.bandwidth() / 2)
+    .attr("stroke-width", 1)
+    .style("opacity", 0.18);
+
+  // ---------------------------------------------------------------
+  // 4. ENTER ANIMATION — dots fall top-to-bottom (rain), oldest read
+  // first, with a fixed noticeable gap between each one's entrance.
+  // ---------------------------------------------------------------
+  const sortedByRead = [...books].sort((a, b) => a.date_read - b.date_read); // oldest first
+  const stagger = 50; // fixed ms between each book's fall — stays noticeable regardless of book count.
+  // Total intro time = books.length * stagger + dotDuration, so this grows as
+  // your library does — bring dotDuration down first if it starts feeling slow.
+  const dotDuration = 500;
+  const phase1TotalMs = (sortedByRead.length - 1) * stagger + dotDuration;
+
+  const tooltip = d3.select("#tooltip");
+
+  const dots = g
+    .selectAll(".book-dot")
+    .data(sortedByRead)
+    .enter()
+    .append("circle")
+    .attr("class", "book-dot")
+    .attr("cx", (d) => x(d.year_published))
+    .attr("cy", originGap - 30)
+    .attr("r", (d) => pageRadius(d.page_count))
+    .attr("fill", (d) => color(d.genre))
+    .style("opacity", 0)
+    .on("mousemove", (event, d) => {
+      tooltip
+        .style("opacity", 1)
+        .style("left", `${event.clientX + 14}px`)
+        .style("top", `${event.clientY + 10}px`).html(`
+            <div class="t-title">${d.title}</div>
+            <div class="t-meta">Written by: ${d.author}, published in ${d.year_published}</div>
+            <div class="t-meta">Genre: ${d.genre.replace("_", "-")}</div>
+            <div class="t-meta">Finished reading: ${d3.timeFormat("%b %Y")(d.date_read)}</div>
+            <div class="t-meta">${d.page_count} pages</div>
+            ${d.language ? `<div class="t-meta">Read in: ${d.language}</div>` : ""}
+          `);
+    })
+    .on("mouseleave", () => tooltip.style("opacity", 0))
+    .on("click", (event, d) => {
+      if (d.has_review) window.location.href = `/reviews/${d.review_slug}/`;
+    });
+
+  svg.transition().duration(200).style("opacity", 1);
+
+  dots
+    .transition()
+    .delay((d, i) => i * stagger)
+    .duration(dotDuration)
+    .attr("cy", (d) => y(monthKey(d)) + y.bandwidth() / 2)
+    .style("opacity", 1);
+
+  // Rings are sized relative to each dot's own radius (pageRadius + a
+  // fixed gap) rather than a flat number now — otherwise a large book's
+  // dot would grow past a fixed ring and end up sitting inside it
+  // instead of surrounded by it.
+  const withReview = books.filter((d) => d.has_review);
+  const ringGap = 5;
+  const ringStrokeWidth = 2;
+  const ringDuration = 700;
+  const ringStagger = Math.min(12, 800 / Math.max(withReview.length, 1));
+  const orbitRadius = 16;
+  const orbitTurns = 1.25;
+
+  const rings = g
+    .selectAll(".review-ring")
+    .data(withReview)
+    .enter()
+    .append("circle")
+    .attr("class", "review-ring")
+    .attr("r", (d) => pageRadius(d.page_count) + ringGap)
+    .attr("fill", "none")
+    .attr("stroke", "var(--ink)")
+    .attr("stroke-width", ringStrokeWidth)
+    .style("opacity", 0);
+
+  rings
+    .transition()
+    .delay((d, i) => phase1TotalMs + i * ringStagger)
+    .duration(ringDuration)
+    .style("opacity", 1)
+    .attrTween("cx", function (d) {
+      const targetX = x(d.year_published);
+      return (t) => {
+        const angle = orbitTurns * 2 * Math.PI * (1 - t);
+        const r = orbitRadius * (1 - t);
+        return targetX + r * Math.cos(angle);
+      };
+    })
+    .attrTween("cy", function (d) {
+      const targetY = y(monthKey(d)) + y.bandwidth() / 2;
+      return (t) => {
+        const angle = orbitTurns * 2 * Math.PI * (1 - t);
+        const r = orbitRadius * (1 - t);
+        return targetY + r * Math.sin(angle);
+      };
+    });
+})();
