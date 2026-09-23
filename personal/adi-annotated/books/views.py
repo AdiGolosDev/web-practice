@@ -1,13 +1,39 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
-from .models import Book, Review, Story
+from .models import Book, Quote, Review, Story
 import markdown
+import random
+from datetime import date
 
 # Create your views here.
 # logic that handles requests and responses goes here
 
+# How many items the "recent stories" / "recent reviews" cards show.
+RECENT_COUNT = 5
+
+def get_quote_of_the_day():
+    quotes = list(Quote.objects.all())
+    if not quotes:
+        return None
+    rng = random.Random(date.today().toordinal())
+    return rng.choice(quotes)
+
+
+def latest_published(model):
+    """Newest published items of `model` (Story or Review), padded with
+    None up to RECENT_COUNT so the template always gets a full-length list."""
+    items = list(
+        model.objects.filter(published=True).order_by('-date_written')[:RECENT_COUNT]
+    )
+    return items + [None] * (RECENT_COUNT - len(items))
+
+
 def index(request):
-    return render(request, 'index.html')
+    return render(request, 'index.html', {
+        'recent_stories': latest_published(Story),
+        'recent_reviews': latest_published(Review),
+        'quote': get_quote_of_the_day(),
+    })
 
 def review_detail(request, slug):
     review = get_object_or_404(Review, slug=slug)

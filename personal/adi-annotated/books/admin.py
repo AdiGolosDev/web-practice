@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib import admin
-from .models import Language, Book, Review, Story
+from .models import Language, Book, Quote, Review, Story
 from datetime import date
 
 # Register your models here.
@@ -65,6 +65,7 @@ class MarkdownUploadAdminMixin:
 class LanguageAdmin(admin.ModelAdmin):
     list_display = ("name",)
 
+
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
     form = BookAdminForm
@@ -72,6 +73,16 @@ class BookAdmin(admin.ModelAdmin):
     search_fields = ("title", "author")
     list_filter = ("genre", "language", "is_reviewed")
     readonly_fields = ("is_reviewed",)
+
+
+@admin.register(Quote)
+class QuoteAdmin(admin.ModelAdmin):
+    list_display = ("author", "quote_english", "original_language", "short_original_quote")
+    search_fields = ("author", "quote_english")
+
+    def short_original_quote(self, obj):
+        return (obj.original_quote[:40] + "…") if len(obj.original_quote) > 40 else obj.original_quote
+    short_original_quote.short_description = "Original quote"
 
 
 @admin.register(Review)

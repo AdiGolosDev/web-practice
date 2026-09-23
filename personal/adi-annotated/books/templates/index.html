@@ -49,39 +49,48 @@
     <div class="lit-window lit-window--stories">
       <div class="window-bar"><span class="dot"></span>Recent Stories</div>
       <ul>
-        <li><a href="#">Lorem ipsum dolor sit amet</a></li>
-        <li><a href="#">Consectetur adipiscing elit</a></li>
-        <li><a href="#">Sed do eiusmod tempor</a></li>
-        <li><a href="#">Ut labore et dolore magna</a></li>
-        <li><a href="#">Ut enim ad minim veniam</a></li>
+        {# empty slots (fewer than 5 published) render as blank placeholder lines #}
+        {% for story in recent_stories %}
+          {% if story %}
+        <li><a href="{% url 'story_detail' story.slug %}">{{ story.title }}</a></li>
+          {% else %}
+        <li aria-hidden="true">&nbsp;</li>
+          {% endif %}
+        {% endfor %}
       </ul>
     </div>
 
     <div class="lit-window lit-window--reviews">
       <div class="window-bar"><span class="dot"></span>Recent Book Reviews</div>
       <ul>
-        <li><a href="#">Quis nostrud exercitation</a></li>
-        <li><a href="#">Duis aute irure dolor</a></li>
-        <li><a href="#">Excepteur sint occaecat</a></li>
-        <li><a href="#">Cupidatat non proident</a></li>
-        <li><a href="#">Sunt in culpa qui officia</a></li>
+        {% for review in recent_reviews %}
+          {% if review %}
+        <li><a href="{% url 'review_detail' review.slug %}">{{ review.title }}</a></li>
+          {% else %}
+        <li aria-hidden="true">&nbsp;</li>
+          {% endif %}
+        {% endfor %}
       </ul>
     </div>
   </div>
 
-  <div class="quote-section">
-    <p class="quote-label">quote of the day</p>
-    <blockquote>
-      <span>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.</span>
-    </blockquote>
-    <cite>— Lorem Ipsum</cite>
-  </div>
+
+<div class="quote-section">
+  <p class="quote-label">quote of the day</p>
+  {% if quote %}
+  <blockquote><span>{{ quote.quote_english }}</span></blockquote>
+  <cite>~ {{ quote.author }}</cite>
+
+  {% if quote.original_quote %}
+  <details class="quote-original">
+    <summary>Show original ({{ quote.original_language }})</summary>
+    <blockquote class="original-text">{{ quote.original_quote }}</blockquote>
+  </details>
+  {% endif %}
+  {% endif %}
+</div>
 </section>
 
-<!-- Book recommendation of the month.
-Assumes the view passes a `book_of_month` object in the context
-with these fields — rename to match your actual model.
--->
 <section class="recommendation-section">
   <div class="recommendation-card">
     <div class="rec-main">
