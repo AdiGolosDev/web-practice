@@ -91,54 +91,55 @@
 </div>
 </section>
 
+{% if book_of_month %}
 <section class="recommendation-section">
   <div class="recommendation-card">
     <div class="rec-main">
       <h3 class="rec-card-title">Book recommendation of the month</h3>
 
       <div class="rec-body">
-        <div class="rec-details">
-          <div class="rec-heading">
-            <p class="rec-book-title">{{ book_of_month.title }}The Elephant Vanishes</p>
-            <p class="rec-author">by {{ book_of_month.author }}Haruki Murakami</p>
-          </div>
+<div class="rec-details">
+  <div class="rec-heading">
+    <p class="rec-book-title">{{ book_of_month.book.title }}</p>
+    <p class="rec-author">by {{ book_of_month.book.author }}</p>
+  </div>
 
-          <dl class="rec-meta">
-            <div class="rec-meta-row">
-              <dt>Published</dt>
-              <dd>{{ book_of_month.year_published }}1982</dd>
-            </div>
-            <div class="rec-meta-row">
-              <dt>Original language</dt>
-              <dd>{{ book_of_month.language }}Japanese</dd>
-            </div>
-            <div class="rec-meta-row">
-              <dt>Pages</dt>
-              <dd>~ {{ book_of_month.page_count }}250</dd>
-            </div>
-            <div class="rec-meta-row">
-              <dt>Difficulty</dt>
-              <dd>{{ book_of_month.difficulty }}3/10</dd>
-            </div>
-            <div class="rec-meta-row">
-              <dt>Personal rating</dt>
-              <dd>{{ book_of_month.rating }}6/10</dd>
-            </div>
-          </dl>
+  <dl class="rec-meta">
+    <div class="rec-meta-row">
+      <dt>Published</dt>
+      <dd>{{ book_of_month.book.year_published }}</dd>
+    </div>
+    <div class="rec-meta-row">
+      <dt>Pages</dt>
+      <dd>~ {{ book_of_month.book.page_count }}</dd>
+    </div>
+    <div class="rec-meta-row">
+      <dt>Difficulty</dt>
+      <dd>{{ book_of_month.book.difficulty }}</dd>
+    </div>
+    <div class="rec-meta-row">
+      <dt>Personal rating</dt>
+      <dd>{{ book_of_month.book.rating }}</dd>
+    </div>
+  </dl>
 
-          <a class="rec-review-link" href="/reviews/the-elephant-vanishes">Read the full review &rarr;</a>
-        </div>
+  {% if book_of_month.book.review and book_of_month.book.review.published %}
+  <a class="rec-review-link" href="{% url 'review_detail' book_of_month.book.review.slug %}">Read the full review &rarr;</a>
+  {% endif %}
+</div>
 
         <div class="rec-description">
-          <p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est, omnis dolor repellendus.</p>
+          <p>{{ book_of_month.short_description }}</p>
         </div>
       </div>
     </div>
 
-    <img src="https://m.media-amazon.com/images/S/compressed.photo.goodreads.com/books/1642991320i/9555.jpg" alt="">
-    <!-- <div class="recommendation-cover"></div> -->
+    {% if book_of_month.cover_url %}
+    <img src="{{ book_of_month.cover_url }}" alt="{{ book_of_month.book.title }} cover">
+    {% endif %}
   </div>
 </section>
+{% endif %}
 
 <script src="{% static 'graph.js' %}"></script>
 

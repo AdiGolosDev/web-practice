@@ -66,6 +66,31 @@ class Quote(models.Model):
         return f"{self.author}: {self.quote_english[:50]}"
 
 
+class BookOfTheMonth(models.Model):
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    isbn = models.CharField(max_length=13, blank=True)
+    short_description = models.TextField()
+    featured_date = models.DateField(default=date.today)
+    cover_override_url = models.URLField(
+        blank=True,
+        help_text="Optional - paste a direct image URL here to override the automatic Open Library cover"
+    )
+
+    class Meta:
+        ordering = ["-featured_date"]
+
+    def __str__(self):
+        return f"{self.book.title} — {self.featured_date}"
+
+    @property
+    def cover_url(self):
+        if self.cover_override_url:
+            return self.cover_override_url
+        if self.isbn:
+            return f"https://covers.openlibrary.org/b/isbn/{self.isbn}-L.jpg?default=false"
+        return None
+
+
 # keeps track of reviews written / links to book 1-to-1
 class Review(models.Model):
     book = models.OneToOneField(Book, on_delete=models.CASCADE)

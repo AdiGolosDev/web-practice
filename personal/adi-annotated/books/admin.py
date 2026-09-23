@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib import admin
-from .models import Language, Book, Quote, Review, Story
+from .models import Language, Book, Quote, BookOfTheMonth, Review, Story
 from datetime import date
 
 # Register your models here.
@@ -83,6 +83,12 @@ class QuoteAdmin(admin.ModelAdmin):
     def short_original_quote(self, obj):
         return (obj.original_quote[:40] + "…") if len(obj.original_quote) > 40 else obj.original_quote
     short_original_quote.short_description = "Original quote"
+
+
+@admin.register(BookOfTheMonth)
+class BookOfTheMonthAdmin(admin.ModelAdmin):
+    list_display = ("book", "featured_date")
+    autocomplete_fields = ["book"]
 
 
 @admin.register(Review)

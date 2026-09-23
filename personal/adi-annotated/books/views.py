@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
-from .models import Book, Quote, Review, Story
+from .models import Book, Quote, BookOfTheMonth, Review, Story
 import markdown
 import random
 from datetime import date
@@ -33,6 +33,7 @@ def index(request):
         'recent_stories': latest_published(Story),
         'recent_reviews': latest_published(Review),
         'quote': get_quote_of_the_day(),
+        'book_of_month': BookOfTheMonth.objects.first(),
     })
 
 def review_detail(request, slug):
