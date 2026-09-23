@@ -51,6 +51,30 @@
   const minPubYear = d3.min(pubYears);
   const xDomain = [minPubYear, currentYear];
 
+  // Each entry describes one way of arranging the dots left-to-right.
+  //   field      -> which property of a book (from /api/books/) to read.
+  //                 If your JSON uses different names, change ONLY these.
+  //   domain     -> [min, max] the x-scale should cover for this metric
+  //   tickValues -> exact tick positions, or null to let d3 pick them
+  const METRICS = {
+    year_published: {
+      field: "year_published",
+      domain: xDomain,
+      tickValues: null,
+    },
+    rating: {
+      field: "rating",
+      domain: [0, 10],
+      tickValues: d3.range(0, 11), // 0,1,2,...,10
+    },
+    difficulty: {
+      field: "difficulty",
+      domain: [0, 10],
+      tickValues: d3.range(0, 11),
+    },
+  };
+  let currentMetric = "year_published"; // which arrangement is showing now
+
   const monthKey = (d) =>
     `${d.date_read.getFullYear()}-${String(d.date_read.getMonth() + 1).padStart(2, "0")}`;
 
@@ -71,6 +95,24 @@
     .domain(monthKeys)
     .range([originGap, innerHeight + originGap])
     .padding(0.35);
+
+  // Read a book's value for a given metric. Returns null (not NaN, not 0)
+  // when the book has no value, so "unrated" can't be mistaken for "rated 0".
+  const valueOf = (d, metricKey) => {
+    const v = d[METRICS[metricKey].field];
+    return v === null || v === undefined || v === "" ? null : +v;
+  };
+
+  // Where a book's dot sits horizontally *right now*. Everything that
+  // positions a dot calls this, so switching metrics only has to change
+  // `currentMetric` and the x-scale's domain — nothing else needs rewriting.
+  // Books with no value for the chosen metric park in the empty gutter to
+  // the left of the axis origin instead of vanishing or breaking the chart.
+  const noDataX = originGap / 2;
+  const xPos = (d) => {
+    const v = valueOf(d, currentMetric);
+    return v === null ? noDataX : x(v);
+  };
 
   const GENRE_COLORS = {
     fiction: "var(--wine)",
@@ -103,9 +145,10 @@
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  g.append("g")
-    .attr("class", "axis")
-    .call(d3.axisTop(x).tickFormat(d3.format("d")).ticks(8));
+  // Keep the axis *generator* and the <g> it draws into in variables, so
+  // the dropdown can re-run the same generator later after the domain changes.
+  const xAxis = d3.axisTop(x).tickFormat(d3.format("d")).ticks(8);
+  const xAxisG = g.append("g").attr("class", "axis").call(xAxis);
 
   g.append("g")
     .attr("class", "axis")
@@ -147,7 +190,7 @@
     .enter()
     .append("circle")
     .attr("class", "book-dot")
-    .attr("cx", (d) => x(d.year_published))
+    .attr("cx", xPos)
     .attr("cy", originGap - 30)
     .attr("r", (d) => pageRadius(d.page_count))
     .attr("fill", (d) => color(d.genre))
@@ -156,12 +199,15 @@
       tooltip
         .style("opacity", 1)
         .style("left", `${event.clientX + 14}px`)
-        .style("top", `${event.clientY + 10}px`).html(`
+        .style("top", `${event.clientY + 10}px`)
+        .style("--tooltip-color", color(d.genre)).html(`
             <div class="t-title">${d.title}</div>
             <div class="t-meta">Written by: ${d.author}, published in ${d.year_published}</div>
             <div class="t-meta">Genre: ${d.genre.replace("_", "-")}</div>
             <div class="t-meta">Finished reading: ${d3.timeFormat("%b %Y")(d.date_read)}</div>
             <div class="t-meta">${d.page_count} pages</div>
+            ${valueOf(d, "rating") !== null ? `<div class="t-meta">Rating: ${valueOf(d, "rating")}/10</div>` : ""}
+            ${valueOf(d, "difficulty") !== null ? `<div class="t-meta">Difficulty: ${valueOf(d, "difficulty")}/10</div>` : ""}
             ${d.language ? `<div class="t-meta">Read in: ${d.language}</div>` : ""}
           `);
     })
@@ -209,7 +255,7 @@
     .duration(ringDuration)
     .style("opacity", 1)
     .attrTween("cx", function (d) {
-      const targetX = x(d.year_published);
+      const targetX = xPos(d);
       return (t) => {
         const angle = orbitTurns * 2 * Math.PI * (1 - t);
         const r = orbitRadius * (1 - t);
@@ -224,4 +270,52 @@
         return targetY + r * Math.sin(angle);
       };
     });
+
+  // ---------------------------------------------------------------
+  // 5. "ARRANGE BY" DROPDOWN — re-plots the dots along a different x metric
+  // ---------------------------------------------------------------
+  const sortSelect = d3.select("#sort-select");
+  const sortDuration = 900;
+
+  function arrangeBy(metricKey) {
+    currentMetric = metricKey;
+    const m = METRICS[metricKey];
+
+    // 1) Point the SAME x-scale at the new metric's range of values.
+    x.domain(m.domain);
+
+    // 2) Tell the axis which ticks to show (null = automatic), then re-run
+    //    it inside a transition so old ticks slide/fade into the new ones.
+    xAxis.tickValues(m.tickValues);
+    xAxisG.transition().duration(sortDuration).call(xAxis);
+
+    // 3) Slide every dot to its new x. `xPos` now reads the new
+    //    currentMetric + the updated scale, so it returns the new position.
+    dots
+      .transition()
+      .duration(sortDuration)
+      .ease(d3.easeCubicInOut)
+      .attr("cx", xPos);
+
+    // 4) Rings get the identical transition so they stay wrapped around
+    //    their dots the whole way.
+    rings
+      .transition()
+      .duration(sortDuration)
+      .ease(d3.easeCubicInOut)
+      .attr("cx", xPos);
+  }
+
+  // A regular `function` (not an arrow) so `this` is the <select> element.
+  sortSelect.on("change", function () {
+    arrangeBy(this.value);
+  });
+
+  // The select starts `disabled` in the HTML. Re-plotting mid-intro would
+  // interrupt the falling-dot animation, so unlock it once the last ring
+  // has finished orbiting in.
+  const introEndMs = withReview.length
+    ? phase1TotalMs + (withReview.length - 1) * ringStagger + ringDuration
+    : phase1TotalMs;
+  d3.timeout(() => sortSelect.property("disabled", false), introEndMs + 50);
 })();

@@ -13,13 +13,28 @@
 <header id="timeline-header">
   <h1>Personal Reading History</h1>
   <p class="lede">Plunge into my past! Take a look at what I've been reading and when :P</p>
-  <div class="legend">
-    <span><i class="swatch swatch-fiction"></i>Fiction</span>
-    <span><i class="swatch swatch-non-fiction"></i>Non-fiction</span>
-  </div>
 </header>
 
 <main id="timeline-main">
+  <div class="graph-controls">
+    <div class="legend">
+      <span><i class="swatch swatch-fiction"></i>Fiction</span>
+      <span><i class="swatch swatch-non-fiction"></i>Non-fiction</span>
+      <span><i class="swatch swatch-reviewed"></i>Reviewed</span>
+    </div>
+
+    <div class="sort-control">
+      <label for="sort-select" class="control-label">Arrange by</label>
+      <div class="select-wrap">
+        <select id="sort-select" autocomplete="off" disabled>
+          <option value="year_published">Publish year</option>
+          <option value="rating">Rating</option>
+          <option value="difficulty">Difficulty</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
   <div id="chart-wrap"></div>
 </main>
 

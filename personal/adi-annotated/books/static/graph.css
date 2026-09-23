@@ -23,6 +23,82 @@
   width: var(--chart-card-width);
 }
 
+/* ---- "Arrange by" control ------------------------------------------------
+   Sits directly above the chart card. #timeline-main already has the same
+   width as the card, so right-aligning here lines the control up with the
+   card's right edge. */
+.graph-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap; /* on narrow screens the control drops to its own line */
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* label + dropdown travel together; margin-left:auto keeps them on the
+   right even if the row wraps */
+.sort-control {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-left: auto;
+}
+
+/* handwritten label, same voice as the "Recent Stories" window titles */
+.control-label {
+  font-family: var(--font-hand);
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink-soft);
+}
+
+/* A <select> can't hold ::after content, so the wrapper carries the chevron. */
+.select-wrap {
+  position: relative;
+}
+.select-wrap::after {
+  content: "";
+  position: absolute;
+  right: 0.95rem;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid var(--ink-soft);
+  border-bottom: 1.5px solid var(--ink-soft);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none; /* clicks fall through to the select underneath */
+}
+
+#sort-select {
+  appearance: none; /* drop the browser's own arrow + chrome */
+  -webkit-appearance: none;
+  margin: 0;
+  padding: 0.45rem 2.4rem 0.45rem 0.85rem;
+  background: var(--paper-card);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+  box-shadow: 0 2px 6px rgba(38, 33, 46, 0.08);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+#sort-select:hover:not(:disabled) {
+  border-color: var(--gold);
+}
+#sort-select:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+/* locked while the intro animation plays */
+#sort-select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* a subtle deckle-edge / card feel behind the chart itself */
 #chart-wrap {
   position: relative;
@@ -56,18 +132,18 @@
   font-family: var(--font-body);
   font-size: 1.05rem;
   color: var(--ink-soft);
-  margin: 0 0 1.1rem;
+  margin: 0;
 }
 
-#timeline-header .legend {
+.legend {
   display: flex;
-  justify-content: center;
+  align-items: center;
   gap: 1.5rem;
   font-family: var(--font-ui);
   font-size: 0.9rem;
   color: var(--ink-soft);
 }
-#timeline-header .legend span {
+.legend span {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -83,6 +159,13 @@
 }
 .swatch-non-fiction {
   background: var(--teal);
+}
+/* hollow ring, matching the ring drawn around reviewed books on the chart.
+   box-sizing is border-box globally, so the 2px border sits *inside* the
+   11px size and this stays the same size as the filled swatches. */
+.swatch-reviewed {
+  background: transparent;
+  border: 2px solid var(--ink);
 }
 
 /* d3 axis text */
@@ -110,20 +193,39 @@
   pointer-events: none;
 }
 
+/* Styled after the .lit-window cards in main.css: a light sheet of paper
+   with a thin outer edge, plus an inset "mat" line inside it. The mat line
+   is the genre color — JS sets --tooltip-color on each hover (wine for
+   fiction, teal for non-fiction). */
 #tooltip {
+  --tooltip-color: var(--ink-soft); /* fallback if a genre isn't recognised */
   position: fixed;
   pointer-events: none;
   z-index: 200;
   opacity: 0;
-  background: var(--ink);
-  color: var(--paper-card);
+  background: var(--paper-card);
+  color: var(--ink);
   font-family: var(--font-ui);
   font-size: 0.8rem;
   line-height: 1.5;
-  padding: 0.6rem 0.8rem;
-  border-radius: 4px;
+  padding: 0.75rem 0.95rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
   max-width: 240px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 10px 22px rgba(38, 33, 46, 0.14),
+    0 2px 5px rgba(38, 33, 46, 0.08);
+}
+/* the coloured inset line, drawn as a pseudo-element so it survives the
+   tooltip's contents being replaced on every hover */
+#tooltip::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid var(--tooltip-color);
+  opacity: 0.7;
+  pointer-events: none;
 }
 #tooltip .t-title {
   font-family: var(--font-display);
