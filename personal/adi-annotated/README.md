@@ -13,7 +13,7 @@ This is a learning project as much as a portfolio piece, so the README will trac
 
 ## Features
 
-- **Interactive reading graph** — every book I've read, plotted with year-read on the y-axis and a switchable x-axis (publish date / page count / my difficulty rating), color-coded by genre, with reviewed books marked and clickable.
+- **Interactive reading graph** — every book I've read, plotted with year-read on the y-axis and a switchable x-axis (publish date / rating / my difficulty rating), color-coded by genre, dots sized depending on page count, with reviewed books marked and clickable.
 - **Book reviews** — full write-ups for books I've reviewed, rendered from Markdown.
 - **Stories** — short fiction and other writing, also Markdown-based.
 - **Comments & voting** — signed-in users can comment and upvote/downvote on reviews and stories.
@@ -39,10 +39,10 @@ _(See `docs/project-guide.md` for the full build plan and reasoning behind these
 
 Updating this section as I go — a running log rather than a finished claim.
 
-- [ ] Django fundamentals (models, views, templates, admin) coming from a Flask background
-- [ ] Relational database design (books, reviews, stories, comments, votes)
-- [ ] D3.js — scales, axes, data joins, transitions
-- [ ] Building a data-driven admin workflow instead of hardcoding content
+- [✅] Django fundamentals (models, views, templates, admin) coming from a Flask background
+- [✅] Relational database design (books, reviews, stories, comments, votes)
+- [✅] D3.js — scales, axes, data joins, transitions
+- [✅] Building a data-driven admin workflow instead of hardcoding content
 - [ ] Authentication & session handling, password hashing
 - [ ] htmx for dynamic UI without a JS framework
 - [ ] Basic web security: CSRF, rate limiting, 2FA, safely gating content server-side
@@ -50,11 +50,10 @@ Updating this section as I go — a running log rather than a finished claim.
 
 ## Project status
 
-🚧 In progress - making graph for displaying books read with D3js :)
+🚧 In progress - setting up user authentication next :p
 
 ## Roadmap / ideas for later
 
-- Scroll-triggered reveal-by-year animation on the graph
 - Search/filter across reviews and stories
 - Reading stats page (pages read per year, genre breakdown, etc.)
 
