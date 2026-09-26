@@ -42,9 +42,7 @@ class SignupForm(UserCreationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Requirements are shown live via JS on the signup page, and
-        # enforced server-side as a fallback by ComplexityValidator above
-        # — no need to print a static checklist here.
+        
         self.fields['password1'].help_text = ''
         self.fields['password2'].help_text = ''
 

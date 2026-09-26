@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
 from .auth import SignupForm
 from .models import Book, Quote, BookOfTheMonth, Review, Story
 import markdown
@@ -39,11 +40,13 @@ def index(request):
         'book_of_month': BookOfTheMonth.objects.first(),
     })
 
+@login_required
 def review_detail(request, slug):
     review = get_object_or_404(Review, slug=slug)
     content_html = markdown.markdown(review.markdown_content)
     return render(request, 'review.html', {'review': review, 'content_html': content_html})
 
+@login_required
 def story_detail(request, slug):
     story = get_object_or_404(Story, slug=slug)
     content_html = markdown.markdown(story.markdown_content)
