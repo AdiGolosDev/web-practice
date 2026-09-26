@@ -19,10 +19,21 @@
             <span class="brand-adi">Adi</span><span class="brand-annotated">Annotated</span>
         </a>
         <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links" onclick="const l=document.getElementById('nav-links');const open=l.classList.toggle('open');this.setAttribute('aria-expanded',open);">Menu</button>
-        <div class="nav-links" id="nav-links">
+            <div class="nav-links" id="nav-links">
             <a href="#stories-reviews-list">Stories/Reviews</a>
-            <a href="#">Sign In</a>
-            <a href="#">Sign Up</a>
+            {% if user.is_authenticated %}
+            {% if user.is_superuser %}
+            <a href="/admin/">Administration</a>
+            {% endif %}
+            <a href="{% url 'index' %}">Profile</a>
+            <form action="{% url 'logout' %}" method="post" class="nav-logout-form">
+                {% csrf_token %}
+                <button type="submit" class="nav-link-button">Log Out</button>
+            </form>
+            {% else %}
+            <a href="{% url 'login' %}">Sign In</a>
+            <a href="{% url 'signup' %}">Sign Up</a>
+            {% endif %}
         </div>
     </nav>
     <main>

@@ -11,7 +11,11 @@
 <section class="graph-hero">
 
 <header id="timeline-header">
+  {% if user.is_authenticated %}
+  <h1>Enjoy your stay, {{ user.username }}!</h1>
+  {% else %}
   <h1>Welcome, Dear Reader!</h1>
+  {% endif %}
   <p class="lede">Plunge into my past. Take a look at what I've been reading and when :P</p>
 </header>
 

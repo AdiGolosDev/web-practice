@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'auth.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="page auth-page">
+  <div class="auth-card">
+    <h1 class="auth-title">Get Your Library Card</h1>
+
+    {% if form.non_field_errors %}
+    <div class="auth-errors">
+      {% for error in form.non_field_errors %}
+      <p>{{ error }}</p>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" class="auth-form" id="signup-form">
+      {% csrf_token %}
+
+      <div class="field">
+        {{ form.username.label_tag }}
+        {{ form.username }}
+        {% if form.username.errors %}
+        <p class="field-error">{{ form.username.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <div class="field">
+        {{ form.email.label_tag }}
+        {{ form.email }}
+        {% if form.email.errors %}
+        <p class="field-error">{{ form.email.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <div class="field">
+        {{ form.password1.label_tag }}
+        {{ form.password1 }}
+        {% if form.password1.errors %}
+        <p class="field-error">{{ form.password1.errors.0 }}</p>
+        {% endif %}
+        <p class="auth-flash" id="password-flash"></p>
+      </div>
+
+      <div class="field">
+        {{ form.password2.label_tag }}
+        {{ form.password2 }}
+        {% if form.password2.errors %}
+        <p class="field-error">{{ form.password2.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="auth-submit">Join</button>
+    </form>
+
+    <p class="auth-switch">Already have a card? <a href="{% url 'login' %}">Sign in</a></p>
+  </div>
+</div>
+
+<script>
+(function () {
+  var form = document.getElementById('signup-form');
+  var pw1 = document.getElementById('id_password1');
+  var flash = document.getElementById('password-flash');
+
+  function isStrong(pw) {
+    return pw.length >= 8
+      && /[A-Z]/.test(pw)
+      && /[a-z]/.test(pw)
+      && /[0-9]/.test(pw)
+      && /[^A-Za-z0-9]/.test(pw);
+  }
+
+  form.addEventListener('submit', function (e) {
+    if (pw1 && !isStrong(pw1.value)) {
+      e.preventDefault();
+      flash.textContent = 'Use 8+ characters with an uppercase letter, a lowercase letter, a number, and a symbol.';
+      flash.classList.remove('flash-show');
+      void flash.offsetWidth; // restart the animation on repeated attempts
+      flash.classList.add('flash-show');
+      pw1.focus();
+    }
+  });
+})();
+</script>
+
+{% endblock %}

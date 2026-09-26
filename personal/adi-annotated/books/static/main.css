@@ -647,3 +647,43 @@ main > .page p {
     width: 100%;
   }
 }
+/* ---- nav: logout form/button (matches nav-links a styling) ---- */
+.nav-logout-form {
+  display: inline-flex;
+  margin: 0;
+}
+
+.nav-link-button {
+  background: none;
+  border: none;
+  padding: 0.2rem 0;
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+  position: relative;
+}
+.nav-link-button:hover {
+  color: var(--ink);
+}
+.nav-link-button::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: -2px;
+  height: 1.5px;
+  background: var(--gold);
+  transition: right 0.2s ease;
+}
+.nav-link-button:hover::after {
+  right: 0;
+}
+
+.nav-user {
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}

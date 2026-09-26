@@ -1,5 +1,7 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
+from django.contrib.auth import login
+from .auth import SignupForm
 from .models import Book, Quote, BookOfTheMonth, Review, Story
 import markdown
 import random
@@ -10,6 +12,7 @@ from datetime import date
 
 # How many items the "recent stories" / "recent reviews" cards show.
 RECENT_COUNT = 5
+
 
 def get_quote_of_the_day():
     quotes = list(Quote.objects.all())
@@ -51,6 +54,17 @@ def about(request):
 
 def contact(request):
     return render(request, 'contact.html')
+
+def signup_view(request):
+    if request.method == 'POST':
+        form = SignupForm(request.POST)      # was UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('index')
+    else:
+        form = SignupForm()                  # was UserCreationForm()
+    return render(request, 'registration/signup.html', {'form': form})
 
 def books_api(request):
     books = Book.objects.all()

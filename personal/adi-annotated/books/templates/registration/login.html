@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'auth.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="page auth-page">
+  <div class="auth-card">
+    <h1 class="auth-title">Welcome Back, Dear Reader</h1>
+    <p class="auth-sub">Sign in to comment, vote, and unlock full reviews.</p>
+
+    {% if form.non_field_errors %}
+    <div class="auth-errors">
+      {% for error in form.non_field_errors %}
+      <p>{{ error }}</p>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="field">
+        {{ field.label_tag }}
+        {{ field }}
+        {% if field.errors %}
+        <p class="field-error">{{ field.errors.0 }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="auth-submit">Sign In</button>
+    </form>
+
+    <p class="auth-switch">New here? <a href="{% url 'signup' %}">Get a library card</a></p>
+  </div>
+</div>
+
+{% endblock %}
