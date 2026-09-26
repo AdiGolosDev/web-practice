@@ -43,19 +43,20 @@ Updating this section as I go — a running log rather than a finished claim.
 - [✅] Relational database design (books, reviews, stories, comments, votes)
 - [✅] D3.js — scales, axes, data joins, transitions
 - [✅] Building a data-driven admin workflow instead of hardcoding content
-- [ ] Authentication & session handling, password hashing
+- [✅] Authentication & session handling, password hashing
 - [ ] htmx for dynamic UI without a JS framework
 - [ ] Basic web security: CSRF, rate limiting, 2FA, safely gating content server-side
 - [ ] Deploying a Django app with a managed Postgres database
 
 ## Project status
 
-🚧 In progress - setting up user authentication next :p
+🚧 In progress - cleaning up pages/adding text to about page finally, maybe...
 
 ## Roadmap / ideas for later
 
 - Search/filter across reviews and stories
 - Reading stats page (pages read per year, genre breakdown, etc.)
+- QR code validation
 
 ## License / Copyright
 
