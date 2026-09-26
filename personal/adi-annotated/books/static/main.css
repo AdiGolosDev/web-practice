@@ -20,6 +20,14 @@
   --postit-yellow: #f3d77b;
   --postit-rose: #e7a6a0;
 
+  /* ---- shadows (rgb triplets, not hex, so box-shadow can add its own
+     alpha via rgba(var(--shadow-rgb), 0.14) etc.) ---- */
+  --shadow-rgb: 38, 33, 46; /* dark shadow, tuned for light-mode paper */
+  --shadow-highlight-rgb:
+    255, 255, 255; /* faint top highlight, "catching light" */
+
+  --cover-bg: #ffffff; /* placeholder swatch behind a missing book cover */
+
   /* ---- type ---- */
   --font-display: "Fraunces", "Iowan Old Style", serif;
   --font-body: "Source Serif 4", Georgia, "Times New Roman", serif;
@@ -37,6 +45,61 @@
      can be sized to match it exactly instead of guessing at it. */
   --chart-pad: clamp(0.75rem, 2vw, 1.75rem);
   --chart-card-width: min(80vw, calc(1600px + 2 * var(--chart-pad)));
+}
+
+/* ==========================================================================
+   Dark mode
+   Same structure everywhere — every rule above reads from these variables,
+   so this block is the only place colors change. Applies automatically to
+   a system dark-mode preference, unless the person explicitly picked
+   "light" with the toggle (data-theme="light" on <html>). An explicit
+   data-theme="dark" forces it on regardless of system preference.
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #190f0f;
+    --paper-card: #241615;
+    --paper-shadow: #0d0808;
+    --ink: #eee3d0;
+    --ink-soft: #b29d96;
+    --rule: rgba(238, 227, 208, 0.06);
+    --rule-strong: rgba(238, 227, 208, 0.15);
+
+    --wine: #d26d73;
+    --teal: #4fae9c;
+    --gold: #d9ab52;
+
+    --postit-yellow: #5a4823;
+    --postit-rose: #5c3131;
+
+    --shadow-rgb: 0, 0, 0;
+    --shadow-highlight-rgb: 255, 244, 214;
+
+    --cover-bg: #27191a;
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper: #190f0f;
+  --paper-card: #241615;
+  --paper-shadow: #0d0808;
+  --ink: #eee3d0;
+  --ink-soft: #b29d96;
+  --rule: rgba(238, 227, 208, 0.06);
+  --rule-strong: rgba(238, 227, 208, 0.15);
+
+  --wine: #d26d73;
+  --teal: #4fae9c;
+  --gold: #d9ab52;
+
+  --postit-yellow: #5a4823;
+  --postit-rose: #5c3131;
+
+  --shadow-rgb: 0, 0, 0;
+  --shadow-highlight-rgb: 255, 244, 214;
+
+  --cover-bg: #27191a;
 }
 
 * {
@@ -114,7 +177,7 @@ main {
   padding: 0 clamp(1rem, 4vw, 2.5rem);
   background: var(--paper-card);
   border-bottom: 1px solid var(--rule-strong);
-  box-shadow: 0 1px 0 rgba(38, 33, 46, 0.05);
+  box-shadow: 0 1px 0 rgba(var(--shadow-rgb), 0.05);
 }
 
 .site-nav .brand {
@@ -159,7 +222,7 @@ main {
   right: 100%;
   bottom: -2px;
   height: 1.5px;
-  background: var(--gold);
+  background: var(--wine);
   transition: right 0.2s ease;
 }
 .site-nav .nav-links a:hover::after {
@@ -225,7 +288,7 @@ main > .page p {
   padding: clamp(2.25rem, 5vw, 3rem) 1.5rem clamp(1.75rem, 4vw, 2.25rem);
   background: var(--paper-card);
   border-top: 1px solid var(--rule-strong);
-  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.4) inset;
+  box-shadow: 0 -1px 0 rgba(var(--shadow-highlight-rgb), 0.4) inset;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -256,7 +319,7 @@ main > .page p {
   right: 100%;
   bottom: -2px;
   height: 1.5px;
-  background: var(--gold);
+  background: var(--wine);
   transition: right 0.2s ease;
 }
 .footer-links a:hover::after {
@@ -338,9 +401,9 @@ main > .page p {
   border-radius: 2px;
   /* a slightly raised sheet of paper, not an app chrome */
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.5) inset,
-    0 10px 22px rgba(38, 33, 46, 0.14),
-    0 2px 5px rgba(38, 33, 46, 0.08);
+    0 1px 0 rgba(var(--shadow-highlight-rgb), 0.5) inset,
+    0 10px 22px rgba(var(--shadow-rgb), 0.14),
+    0 2px 5px rgba(var(--shadow-rgb), 0.08);
   padding: 1.15rem 1.3rem 1.35rem;
 }
 /* inset "mat" line, like a frame around the page */
@@ -424,8 +487,8 @@ main > .page p {
   border: 1px solid var(--rule-strong);
   border-radius: 4px;
   box-shadow:
-    0 12px 30px rgba(38, 33, 46, 0.16),
-    0 2px 6px rgba(38, 33, 46, 0.08);
+    0 12px 30px rgba(var(--shadow-rgb), 0.16),
+    0 2px 6px rgba(var(--shadow-rgb), 0.08);
   padding: clamp(1.5rem, 4vw, 2.5rem);
 }
 
@@ -546,10 +609,10 @@ main > .page p {
   width: 100%;
   height: 100%;
   min-height: 220px;
-  background: #fff;
+  background: var(--cover-bg);
   border: 1px solid var(--rule-strong);
   border-radius: 3px;
-  box-shadow: 0 6px 16px rgba(38, 33, 46, 0.14);
+  box-shadow: 0 6px 16px rgba(var(--shadow-rgb), 0.14);
 }
 
 @media (max-width: 760px) {
@@ -674,7 +737,7 @@ main > .page p {
   right: 100%;
   bottom: -2px;
   height: 1.5px;
-  background: var(--gold);
+  background: var(--wine);
   transition: right 0.2s ease;
 }
 .nav-link-button:hover::after {

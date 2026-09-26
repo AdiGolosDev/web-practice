@@ -3,6 +3,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script>
+        // Runs before anything renders, so the page never flashes the wrong
+        // theme. If the person has an explicit choice saved, use it;
+        // otherwise do nothing here and let the CSS media query follow
+        // their system preference.
+        (function () {
+            var stored = localStorage.getItem('theme');
+            if (stored === 'light' || stored === 'dark') {
+                document.documentElement.setAttribute('data-theme', stored);
+            }
+        })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Adi Annotated{% endblock %}</title>
 
@@ -34,6 +46,7 @@
             <a href="{% url 'login' %}">Sign In</a>
             <a href="{% url 'signup' %}">Sign Up</a>
             {% endif %}
+            <button type="button" id="theme-toggle" class="nav-link-button" aria-label="Toggle dark mode"></button>
         </div>
     </nav>
     <main>
@@ -49,5 +62,30 @@
 
         <p class="footer-copy">&copy; {% now "Y" %} Adi Golos</p>
     </footer>
+
+    <script>
+        (function () {
+            var btn = document.getElementById('theme-toggle');
+
+            function currentTheme() {
+                var stored = localStorage.getItem('theme');
+                if (stored === 'light' || stored === 'dark') return stored;
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+
+            function label(theme) {
+                btn.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+            }
+
+            label(currentTheme());
+
+            btn.addEventListener('click', function () {
+                var next = currentTheme() === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                label(next);
+            });
+        })();
+    </script>
 </body>
 </html>
