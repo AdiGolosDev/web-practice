@@ -11,8 +11,7 @@ from datetime import date
 # Create your views here.
 # logic that handles requests and responses goes here
 
-# How many items the "recent stories" / "recent reviews" cards show.
-RECENT_COUNT = 5
+RECENT_COUNT = 3
 
 
 def get_quote_of_the_day():
@@ -40,11 +39,13 @@ def index(request):
         'book_of_month': BookOfTheMonth.objects.first(),
     })
 
+
 @login_required
 def review_detail(request, slug):
     review = get_object_or_404(Review, slug=slug)
     content_html = markdown.markdown(review.markdown_content)
     return render(request, 'review.html', {'review': review, 'content_html': content_html})
+
 
 @login_required
 def story_detail(request, slug):
@@ -52,11 +53,14 @@ def story_detail(request, slug):
     content_html = markdown.markdown(story.markdown_content)
     return render(request, 'story.html', {'story': story, 'content_html': content_html})
 
+
 def about(request):
     return render(request, 'about.html')
 
+
 def contact(request):
     return render(request, 'contact.html')
+
 
 def signup_view(request):
     if request.method == 'POST':
@@ -68,6 +72,7 @@ def signup_view(request):
     else:
         form = SignupForm()                  # was UserCreationForm()
     return render(request, 'registration/signup.html', {'form': form})
+
 
 def books_api(request):
     books = Book.objects.all()

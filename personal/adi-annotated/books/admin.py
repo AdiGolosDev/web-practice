@@ -44,8 +44,7 @@ class MarkdownUploadForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # markdown_content can be blank in the form now, since it might
-        # get filled in from the uploaded file instead of being typed.
+        
         self.fields["markdown_content"].required = False
 
 

@@ -275,7 +275,7 @@
   // 5. "ARRANGE BY" DROPDOWN — re-plots the dots along a different x metric
   // ---------------------------------------------------------------
   const sortSelect = d3.select("#sort-select");
-  const sortDuration = 900;
+  const sortDuration = 1000;
 
   function arrangeBy(metricKey) {
     currentMetric = metricKey;

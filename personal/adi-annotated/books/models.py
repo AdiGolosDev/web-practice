@@ -66,6 +66,7 @@ class Quote(models.Model):
         return f"{self.author}: {self.quote_english[:50]}"
 
 
+# BookOfTheMonth keeps track of books I've recommended
 class BookOfTheMonth(models.Model):
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
     isbn = models.CharField(max_length=13, blank=True)
