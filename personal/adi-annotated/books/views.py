@@ -1,9 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from .auth import SignupForm
-from .models import Book, Quote, BookOfTheMonth, Review, Story
+from .models import Book, Quote, BookOfTheMonth, Review, Story, Comment
 import markdown
 import random
 from datetime import date
@@ -52,6 +52,19 @@ def story_detail(request, slug):
     story = get_object_or_404(Story, slug=slug)
     content_html = markdown.markdown(story.markdown_content)
     return render(request, 'story.html', {'story': story, 'content_html': content_html})
+
+
+@login_required
+def add_comment(request, slug):
+    review = get_object_or_404(Review, slug=slug)
+    if request.method != 'POST':
+        return HttpResponseForbidden()
+    comment = Comment.objects.create(
+        review=review,
+        user=request.user,
+        content=request.POST['content'],
+    )
+    return render(request, 'partials/comment.html', {'comment': comment})
 
 
 def about(request):

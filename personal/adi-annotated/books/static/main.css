@@ -421,6 +421,54 @@ main > .page p {
 .lit-window--reviews {
   --window-color: var(--teal);
 }
+.lit-window--about {
+  --window-color: var(--gold);
+}
+
+/* ---- About page: same .lit-window card, sized up for full body copy
+   instead of the small homepage list cards ---- */
+.about-card {
+  padding: clamp(2rem, 5vw, 3rem);
+}
+.about-card h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 2.6rem);
+  margin: 0 0 0.75rem;
+  color: var(--ink);
+}
+.about-lede {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  color: var(--ink-soft);
+  margin: 0 0 2rem;
+}
+.about-section {
+  margin-top: 1.75rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--rule-strong);
+}
+.about-section:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+.about-section h2 {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  color: var(--ink);
+}
+.about-section p {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--ink);
+  margin: 0 0 1rem;
+}
+.about-section p:last-child {
+  margin-bottom: 0;
+}
 
 .lit-window .window-bar {
   display: flex;
