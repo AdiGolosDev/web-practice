@@ -425,6 +425,155 @@ main > .page p {
   --window-color: var(--gold);
 }
 
+/* ---- vote widget: tucked into the bottom-right corner of the
+   review/story card, like a small stamp rather than a UI row. .lit-window
+   is already position:relative, so this just pins to its corner. Extra
+   bottom padding on the card (via :has) keeps it clear of the content. ---- */
+.lit-window:has(.vote-widget) {
+  padding-bottom: 3rem;
+}
+
+.vote-widget {
+  position: absolute;
+  right: 1.2rem;
+  bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  opacity: 0.75;
+  transition: opacity 0.15s ease;
+}
+.vote-widget:hover {
+  opacity: 1;
+}
+.vote-label {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+.vote-label strong {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.vote-arrows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.vote-btn {
+  background: none;
+  border: none;
+  padding: 0.15rem 0.3rem;
+  margin: -0.15rem -0.3rem;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.vote-btn:hover {
+  color: var(--ink);
+}
+.vote-up:hover {
+  color: var(--teal);
+}
+.vote-down:hover {
+  color: var(--wine);
+}
+.vote-btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* ---- comments section ---- */
+.comments-section {
+  margin-top: 2.5rem;
+}
+.comments-heading {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 1.25rem;
+}
+
+#comments-list .comment {
+  background: var(--paper-card);
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+  box-shadow: 0 2px 6px rgba(var(--shadow-rgb), 0.08);
+  padding: 1rem 1.15rem;
+  margin-bottom: 0.85rem;
+}
+#comments-list .comment:last-child {
+  margin-bottom: 0;
+}
+.comment-meta {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  margin: 0 0 0.35rem;
+}
+.comment-meta strong {
+  color: var(--ink);
+}
+.comment-body {
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: var(--ink);
+  margin: 0;
+}
+
+.comment-form {
+  margin-top: 1.5rem;
+}
+.comment-form textarea {
+  width: 100%;
+  min-height: 90px;
+  padding: 0.7rem 0.85rem;
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  color: var(--ink);
+  background: var(--paper-card);
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+  resize: vertical;
+  margin-bottom: 0.75rem;
+}
+.comment-form textarea:focus {
+  outline: none;
+  border-color: var(--wine);
+}
+.comment-submit {
+  padding: 0.65rem 1.5rem;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--paper-card);
+  background: var(--wine);
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.comment-submit:hover {
+  background: var(--teal);
+}
+.comment-submit:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+.auth-notice {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+
 /* ---- About page: same .lit-window card, sized up for full body copy
    instead of the small homepage list cards ---- */
 .about-card {

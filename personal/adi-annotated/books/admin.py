@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib import admin
-from .models import Language, Book, Quote, BookOfTheMonth, Review, Story
+from .models import Language, Book, Quote, BookOfTheMonth, Review, Story, Comment, Vote
 from datetime import date
 
 # Register your models here.
@@ -100,3 +100,19 @@ class ReviewAdmin(MarkdownUploadAdminMixin, admin.ModelAdmin):
 class StoryAdmin(MarkdownUploadAdminMixin, admin.ModelAdmin):
     list_display = ("title", "published", "date_written")
     prepopulated_fields = {"slug": ("title",)}
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('user', 'target', 'short_content', 'timestamp')
+    list_filter = ('timestamp',)
+    search_fields = ('content', 'user__username')
+    ordering = ('-timestamp',)
+
+    def target(self, obj):
+        return obj.review or obj.story
+    target.short_description = 'On'
+
+    def short_content(self, obj):
+        return (obj.content[:60] + '…') if len(obj.content) > 60 else obj.content
+    short_content.short_description = 'Comment'

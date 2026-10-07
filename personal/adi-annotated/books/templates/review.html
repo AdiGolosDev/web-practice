@@ -5,23 +5,27 @@
 {% block content %}
 <div class="page">
     <div class="lit-window lit-window--reviews">
-    <h1>{{ review.title }}</h1>
-    <div>{{ content_html|safe }}</div>
+        <h1>{{ review.title }}</h1>
+        <div>{{ content_html|safe }}</div>
+        {% include 'partials/vote_widget.html' with kind='review' slug=review.slug %}
+    </div>
+
+    <div class="comments-section">
+        <h2 class="comments-heading">Comments</h2>
+        <div id="comments-list">
+            {% for comment in review.comment_set.all %}
+                {% include 'partials/comment.html' %}
+            {% endfor %}
+        </div>
+
+        {% if user.is_authenticated %}
+        <form class="comment-form" hx-post="{% url 'add_comment' review.slug %}" hx-target="#comments-list" hx-swap="afterbegin">
+            <textarea name="content" required placeholder="Add a comment..." maxlength="2000"></textarea>
+            <button type="submit" class="comment-submit">Post Comment</button>
+        </form>
+        {% else %}
+        <p class="auth-notice">Sign in to comment.</p>
+        {% endif %}
     </div>
 </div>
-
-   <div id="comments-list">
-       {% for comment in review.comment_set.all %}
-           {% include 'partials/comment.html' %}
-       {% endfor %}
-   </div>
-
-   {% if user.is_authenticated %}
-   <form hx-post="{% url 'add_comment' review.slug %}" hx-target="#comments-list" hx-swap="afterbegin">
-       <textarea name="content" required placeholder="Add a comment..."></textarea>
-       <button type="submit" class="auth-submit">Post Comment</button>
-   </form>
-   {% else %}
-   <p class="auth-notice">Sign in to comment.</p>
-   {% endif %}
 {% endblock %}

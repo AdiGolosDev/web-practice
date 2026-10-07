@@ -1,0 +1,12 @@
+<div class="vote-widget" id="vote-widget">
+    <span class="vote-label">Reader score: <strong>{{ score }}</strong></span>
+    <div class="vote-arrows">
+        {% if kind == 'review' %}
+        <button type="button" class="vote-btn vote-up" hx-post="{% url 'vote_review' slug 'up' %}" hx-target="#vote-widget" hx-swap="outerHTML" aria-label="Upvote">▲</button>
+        <button type="button" class="vote-btn vote-down" hx-post="{% url 'vote_review' slug 'down' %}" hx-target="#vote-widget" hx-swap="outerHTML" aria-label="Downvote">▼</button>
+        {% else %}
+        <button type="button" class="vote-btn vote-up" hx-post="{% url 'vote_story' slug 'up' %}" hx-target="#vote-widget" hx-swap="outerHTML" aria-label="Upvote">▲</button>
+        <button type="button" class="vote-btn vote-down" hx-post="{% url 'vote_story' slug 'down' %}" hx-target="#vote-widget" hx-swap="outerHTML" aria-label="Downvote">▼</button>
+        {% endif %}
+    </div>
+</div>
