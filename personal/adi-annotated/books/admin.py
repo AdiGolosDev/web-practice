@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib import admin
-from .models import Language, Book, Quote, BookOfTheMonth, Review, Story, Comment, Vote
+from .models import Language, Book, Quote, BookOfTheMonth, Review, Story, Comment, Contact
 from datetime import date
 
 # Register your models here.
@@ -116,3 +116,15 @@ class CommentAdmin(admin.ModelAdmin):
     def short_content(self, obj):
         return (obj.content[:60] + '…') if len(obj.content) > 60 else obj.content
     short_content.short_description = 'Comment'
+
+
+@admin.register(Contact)
+class ContactAdmin(admin.ModelAdmin):
+    list_display = ("subject", "name", "email", "sent_at")
+    list_filter = ("sent_at",)
+    search_fields = ("name", "email", "subject", "message")
+    ordering = ("-sent_at",)  # newest first
+    readonly_fields = ("name", "email", "subject", "message", "sent_at")
+
+    def has_add_permission(self, request):
+        return False  # messages only arrive via the website form
