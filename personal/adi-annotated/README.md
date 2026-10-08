@@ -44,19 +44,20 @@ Updating this section as I go — a running log rather than a finished claim.
 - [✅] D3.js — scales, axes, data joins, transitions
 - [✅] Building a data-driven admin workflow instead of hardcoding content
 - [✅] Authentication & session handling, password hashing
-- [ ] htmx for dynamic UI without a JS framework
+- [✅] htmx for dynamic UI without a JS framework
 - [ ] Basic web security: CSRF, rate limiting, 2FA, safely gating content server-side
 - [ ] Deploying a Django app with a managed Postgres database
 
 ## Project status
 
-🚧 In progress - cleaning up pages/adding text to about page finally, maybe...
+🚧 In progress - building functional contact form next
 
 ## Roadmap / ideas for later
 
 - Search/filter across reviews and stories
 - Reading stats page (pages read per year, genre breakdown, etc.)
 - QR code validation
+- every singed in user gets account, access to stats page (where they can add their own books and have similar graph like mine on the main page)
 
 ## License / Copyright
 
