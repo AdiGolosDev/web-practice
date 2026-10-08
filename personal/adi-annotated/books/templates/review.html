@@ -19,7 +19,7 @@
         </div>
 
         {% if user.is_authenticated %}
-        <form class="comment-form" hx-post="{% url 'add_comment' review.slug %}" hx-target="#comments-list" hx-swap="afterbegin">
+        <form class="comment-form" hx-post="{% url 'add_comment' review.slug %}" hx-target="#comments-list" hx-swap="afterbegin" hx-on::after-request="if(event.detail.successful) this.reset()">
             <textarea name="content" required placeholder="Add a comment..." maxlength="2000"></textarea>
             <button type="submit" class="comment-submit">Post Comment</button>
         </form>
